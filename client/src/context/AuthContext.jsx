@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { watchAuthState, signInWithGoogle, completeRedirectSignIn, signOut as firebaseSignOut } from '../firebase';
+import { watchAuthState, signInWithGoogle, signOut as firebaseSignOut } from '../firebase';
 import { api } from '../api';
 
 const AuthContext = createContext(null);
@@ -10,16 +10,6 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     async function init() {
-      // In the native app, a login may have just returned from Google's
-      // full-page redirect — finish that sign-in before checking who's
-      // logged in. A no-op on the regular website (still uses popup).
-      try {
-        const idToken = await completeRedirectSignIn();
-        if (idToken) await api.post('/authorize', { token: idToken });
-      } catch (err) {
-        console.error('Redirect sign-in failed:', err);
-      }
-
       // Ask the Flask session (the __session cookie) who's logged in — this
       // is the source of truth, not Firebase's client-side auth state alone,
       // since /authorize is what actually creates the Flask-Login session.
@@ -43,7 +33,6 @@ export function AuthProvider({ children }) {
 
   async function login() {
     const idToken = await signInWithGoogle();
-    if (!idToken) return null; // native: page is navigating away for the redirect flow
     await api.post('/authorize', { token: idToken });
     const me = await api.get('/api/me');
     setUser(me);
