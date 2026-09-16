@@ -1,0 +1,12 @@
+{
+  "appId": "com.expensemanagement.app",
+  "appName": "Expense Management",
+  "webDir": "dist",
+  "server": {
+    "url": "https://expensemanagement-178bf.web.app",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

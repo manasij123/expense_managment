@@ -1,0 +1,111 @@
+package com.expensemanagement.app
+
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+class AlarmReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        val isTest = intent.getBooleanExtra("isTest", false)
+        val type = intent.getStringExtra("type") ?: "newspaper"
+        val slot = intent.getIntExtra("slot", 0)
+        val appContext = context.applicationContext
+
+        // Network call needed before deciding whether to ring — goAsync() lets
+        // the receiver keep running briefly in the background for this.
+        val pendingResult = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                if (type == "gas") handleGasAlarm(appContext, isTest)
+                else handleNewspaperAlarm(appContext, isTest)
+            } finally {
+                if (!isTest) {
+                    // Alarms are one-shot; re-arm tomorrow's occurrence.
+                    if (type == "gas") AlarmScheduler.scheduleGasAlarm(appContext)
+                    else if (slot != 0) AlarmScheduler.scheduleSlot(appContext, slot)
+                }
+                pendingResult.finish()
+            }
+        }
+    }
+
+    private suspend fun handleNewspaperAlarm(context: Context, isTest: Boolean) {
+        // "Skip today" wins over everything else — self-expiring, so it only
+        // ever silences the alarm for the one day it was set for.
+        if (!isTest && Prefs.isTodaySkipped(context)) {
+            Prefs.setSkipDate(context, null)
+            return
+        }
+
+        val isTaken = try {
+            val status = ApiClient.getNewspaperStatus()
+            val record = status.optJSONObject("record")
+            val daysTaken = record?.optJSONObject("days_taken")
+            val dayKey = SimpleDateFormat("d", Locale.US).format(Date())
+            daysTaken?.optBoolean(dayKey, false) ?: false
+        } catch (e: Exception) {
+            false // can't reach the server — ring anyway, better to over-notify than miss it
+        }
+
+        if (isTaken && !isTest) return
+        showFullScreenAlarm(
+            context,
+            title = context.getString(R.string.alarm_title),
+            body = context.getString(R.string.alarm_body),
+            type = "newspaper",
+        )
+    }
+
+    private suspend fun handleGasAlarm(context: Context, isTest: Boolean) {
+        val isDue = try {
+            ApiClient.isGasCheckInDue()
+        } catch (e: Exception) {
+            false // can't reach the server — stay quiet rather than nag on a guess
+        }
+
+        if (!isDue && !isTest) return
+        showFullScreenAlarm(
+            context,
+            title = context.getString(R.string.gas_alarm_title),
+            body = context.getString(R.string.gas_alarm_body),
+            type = "gas",
+        )
+    }
+
+    private fun showFullScreenAlarm(context: Context, title: String, body: String, type: String) {
+        NotificationHelper.createChannel(context)
+
+        val fullScreenIntent = Intent(context, AlarmActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            putExtra("type", type)
+            putExtra("title", title)
+            putExtra("body", body)
+        }
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            context, 0, fullScreenIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, NotificationHelper.CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setFullScreenIntent(fullScreenPendingIntent, true)
+            .setAutoCancel(true)
+            .build()
+
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(if (type == "gas") 1002 else 1001, notification)
+    }
+}

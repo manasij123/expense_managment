@@ -1,0 +1,30 @@
+<resources>
+    <!-- Brand / neon accents -->
+    <color name="brand_indigo">#8B7CFF</color>
+    <color name="brand_indigo_dark">#6C5CE0</color>
+    <color name="brand_indigo_soft">#241F45</color>
+
+    <color name="brand_green">#39FF88</color>
+    <color name="brand_green_bright">#6BFFB0</color>
+    <color name="brand_green_soft">#0F3324</color>
+
+    <color name="neon_blue">#22D3FF</color>
+    <color name="neon_blue_dark">#0FB8E0</color>
+    <color name="neon_blue_soft">#0B2A38</color>
+
+    <!-- Semantic -->
+    <color name="amber">#FFC93C</color>
+    <color name="amber_soft">#3A2D0C</color>
+    <color name="rose">#FF4D7D</color>
+    <color name="rose_soft">#3A1420</color>
+
+    <!-- Surfaces (dark) -->
+    <color name="bg_top">#0A0E1A</color>
+    <color name="bg_bottom">#140B24</color>
+    <color name="surface_card">#151A2C</color>
+
+    <!-- Text -->
+    <color name="text_primary">#F5F7FF</color>
+    <color name="text_secondary">#8B93B0</color>
+    <color name="text_on_brand">#0A0E1A</color>
+</resources>

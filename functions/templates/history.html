@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+
+{% block title %}Payment History{% endblock %}
+
+{% block header_content %}
+<div class="flex items-center">
+    <a href="{{ url_for('flat_expense') }}" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-black/5 transition border border-gray-200 mr-4 no-print">
+        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+    </a>
+    <h1 class="font-bold text-lg sm:text-xl tracking-tight text-slate-700 flex items-center">
+        <i data-lucide="history" class="w-6 h-6 text-slate-500 mr-2"></i>
+        Payment History
+    </h1>
+</div>
+<div class="flex items-center justify-end flex-wrap gap-x-4 gap-y-2 ml-auto">
+    <button onclick="window.print()" class="w-10 h-10 rounded-full text-slate-500 hover:bg-black/5 flex items-center justify-center transition no-print" title="Print History">
+        <i data-lucide="printer" class="w-6 h-6"></i>
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- Tab Buttons -->
+<div class="mb-6 border-b border-slate-200/80 dark:border-slate-700 no-print">
+    <nav class="flex -mb-px" aria-label="Tabs">
+        <button id="tab-monthly" onclick="switchTab('monthly')" class="tab-btn border-indigo-500 text-indigo-600 dark:text-indigo-400 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+            Monthly View
+        </button>
+        <button id="tab-yearly" onclick="switchTab('yearly')" class="tab-btn border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-slate-400 dark:hover:text-slate-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ml-8">
+            Yearly Reports
+        </button>
+    </nav>
+</div>
+
+<!-- Tab Content: Monthly View -->
+<div id="content-monthly" class="tab-content">
+    
+    <!-- Past Dues Alert -->
+    {% if unpaid_past_records %}
+    <div class="bg-rose-50 border-l-4 border-rose-500 p-4 mb-6 rounded-r-lg shadow-sm no-print">
+        <div class="flex items-center mb-2">
+        <i data-lucide="alert-triangle" class="w-6 h-6 text-rose-500 mr-2"></i>
+        <div>
+            <h3 class="text-rose-800 font-bold text-sm">Action Required: Past Year Dues</h3>
+            <p class="text-rose-600 text-xs">These months are pending from previous years.</p>
+        </div>
+        </div>
+        <div class="pl-8 grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+            {% for item in unpaid_past_records %}
+            <div class="flex items-center justify-between bg-white/60 p-2 rounded border border-rose-100">
+                <span class="text-sm font-bold text-slate-700">{{ item.record.get('month_name') }} {{ item.record.get('year') }}</span>
+                <button type="button" onclick="openPayModal('{{ item.id }}', {{ item.total }})" class="bg-rose-500 hover:bg-rose-600 text-white text-[10px] font-bold px-3 py-1.5 rounded transition shadow-sm">
+                    Pay ₹{{ item.total }}
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Search and Filter Form -->
+    <form id="search-form" class="glass-card p-4 mb-6 no-print">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+            <div class="md:col-span-8">
+                <label for="search-input" class="text-xs font-bold text-slate-500 uppercase">Search Expenses</label>
+                <div class="relative mt-1">
+                    <input type="search" id="search-input" placeholder="Search by reason, amount, or month..."
+                           class="w-full pl-10 pr-4 py-2.5 bg-white/60 border border-slate-200/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <div class="absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center">
+                        <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="md:col-span-2">
+                <label for="year-filter" class="text-xs font-bold text-slate-500 uppercase">Filter by Year</label>
+                <select id="year-filter" class="w-full mt-1 pl-3 pr-8 py-2.5 bg-white/60 border border-slate-200/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="all">All Years</option>
+                    {% for year in filter_years %}
+                    <option value="{{ year }}">{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="md:col-span-2 w-full bg-indigo-600 text-white py-2.5 rounded-lg font-semibold text-sm shadow-sm hover:bg-indigo-700 transition flex items-center justify-center">
+                <i data-lucide="search" class="w-5 h-5 mr-2"></i> Search
+            </button>
+        </div>
+    </form>
+
+    <!-- New Payment Grid Indicator -->
+    <div class="glass-card p-4 mb-6">
+        <h3 class="text-sm font-bold text-slate-600 uppercase tracking-wider mb-3 text-center">Current Year Payment Status</h3>
+        <div class="grid grid-cols-6 md:grid-cols-12 gap-2 md:gap-3 payment-grid">
+                {% for month_status in monthly_payment_status %}
+                <div class="month-block 
+                            {% if month_status.is_paid %}paid{% else %}unpaid{% endif %}
+                            {% if loop.index == current_month_num %}current{% endif %}"
+                     title="{{ month_status.name }} - {{ 'Paid' if month_status.is_paid else 'Unpaid' }}">
+                    <span class="font-bold text-xs">{{ month_status.name }}</span>
+                </div>
+                {% endfor %}
+        </div>
+    </div>
+    
+    <div class="glass-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table id="history-table" class="w-full text-left border-collapse responsive-table">
+                <thead>
+                    <tr class="text-xs text-slate-500 uppercase font-semibold tracking-wider border-b border-slate-200/50">
+                        <th class="px-6 py-4">Period</th>
+                        <th class="px-6 py-4 text-center">Status</th>
+                        <th class="px-6 py-4 text-center">Items</th>
+                        <th class="px-6 py-4 text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body" class="divide-y divide-slate-100">
+                    {% for item in history %}
+                    <tr class="history-row hover:bg-white/40 transition stagger-row" data-stagger-index="{{ loop.index }}">
+                        <td class="px-6 py-4" data-label="Period">
+                            <p class="font-bold text-slate-800">{{ item.record.get('month_name', 'N/A') }}</p>
+                            <p class="text-xs text-slate-400">{{ item.record.get('year', '----') }}</p>
+                        </td>
+                        <td class="px-6 py-4 text-center" data-label="Status">
+                            {% if item.record.get('is_paid') %}
+                                <div class="flex flex-col items-center gap-2">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                        Paid
+                                    </span>
+                                    {% if item.record.get('paid_date') %}
+                                    <span class="text-[10px] text-gray-500 mt-1 font-medium">{{ item.record.paid_date }}</span>
+                                    {% endif %}
+                                    {% if item.record.get('change_due', 0) > 0 %}
+                                        {% if item.record.get('change_received') %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                                            <i data-lucide="check" class="w-3 h-3 mr-1"></i> ₹{{ item.record.change_due }} Change Received
+                                        </span>
+                                        {% else %}
+                                        <a href="{{ url_for('confirm_change_received', doc_id=item.id, next='history') }}" onclick="return confirm('Have you actually received ₹{{ item.record.change_due }} back? Only confirm once the money is really in your hand.')" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 transition no-print">
+                                            <i data-lucide="coins" class="w-3 h-3 mr-1"></i> ₹{{ item.record.change_due }} Due Back
+                                        </a>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <button type="button" onclick="openPayModal('{{ item.id }}', {{ item.total }})" class="pay-now-btn bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold text-xs shadow-sm hover:bg-indigo-700 transition no-print">
+                                    Pay Now
+                                </button>
+                                <span class="hidden print-block text-rose-600 font-bold text-xs uppercase">Unpaid</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-xs text-slate-500 text-center align-top" data-label="Items">
+                            <div class="flex flex-col gap-3 items-center">
+                            {% for expense in item.record.get('expenses', []) %}
+                                <div class="flex flex-col items-center">
+                                    <span class="font-medium text-slate-700">{{ expense.reason }}</span>
+                                    <span class="text-[10px] text-slate-500 bg-slate-100 px-2 rounded-full mt-0.5">₹{{ expense.amount }}</span>
+                                </div>
+                            {% endfor %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-800 align-top" data-label="Total">
+                            ₹{{ item.total }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <!-- No results message -->
+                    <tr id="no-results-row" class="hidden!">
+                        <td colspan="4" class="text-center py-12">
+                            <i data-lucide="search-x" class="w-16 h-16 text-slate-300 mb-4 mx-auto"></i>
+                            <p class="font-bold text-slate-600">No Results Found</p>
+                            <p class="text-sm text-slate-400">Try adjusting your search or filters.</p>
+                        </td>
+                    </tr>
+                    <!-- Grand Total Row -->
+                    <tr class="bg-white/30 border-t-2 border-slate-200/50 total-row">
+                        <td class="px-6 py-4 font-bold text-slate-700 uppercase tracking-wider" colspan="3">Grand Total (Paid)</td>
+                        <td class="px-6 py-4 text-right font-extrabold text-slate-900 text-lg">
+                            ₹{{ grand_total_paid }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Tab Content: Search Results -->
+<div id="search-results-container" class="hidden">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-slate-700">Search Results</h2>
+        <button id="clear-search-btn" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800">&times; Clear Search</button>
+    </div>
+    <div class="glass-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="text-xs text-slate-500 uppercase font-semibold tracking-wider border-b border-slate-200/50">
+                        <th class="px-6 py-4">Expense Reason</th>
+                        <th class="px-6 py-4 text-right">Amount</th>
+                        <th class="px-6 py-4">Period</th>
+                        <th class="px-6 py-4 text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="search-results-body" class="divide-y divide-slate-100">
+                    <!-- JS will populate this -->
+                </tbody>
+            </table>
+            <div id="no-search-results" class="hidden text-center py-12">
+                <i data-lucide="search-x" class="w-16 h-16 text-slate-300 mb-4 mx-auto"></i>
+                <p class="font-bold text-slate-600">No Results Found</p>
+                <p class="text-sm text-slate-400">Try a different search term or filter.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab Content: Yearly Reports -->
+<div id="content-yearly" class="tab-content hidden">
+    <div class="glass-card p-6">
+        <h2 class="text-xl font-bold text-slate-700 dark:text-slate-200 mb-4">Generated Yearly Reports</h2>
+        
+        {% if yearly_reports %}
+            <ul class="divide-y divide-slate-200/80 dark:divide-slate-700">
+                {% for report in yearly_reports %}
+                <li class="py-4 flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i data-lucide="file-text" class="w-8 h-8 text-indigo-500 mr-4"></i>
+                        <div>
+                            <p class="font-bold text-slate-800">Expense Report - {{ report.year }}</p>
+                            <p class="text-xs text-slate-500">Generated on: {{ report.generated_at.strftime('%d %b %Y') if report.generated_at else 'N/A' }}</p>
+                        </div>
+                    </div>
+                    <a href="{{ report.pdf_url }}" target="_blank" class="glass-btn-secondary px-4 py-2 rounded-lg font-semibold text-xs flex items-center">
+                        <i data-lucide="file-down" class="w-5 h-5 text-indigo-500 mr-2"></i> View PDF
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div id="demo-report-container">
+                <p class="text-center text-sm text-slate-500 dark:text-slate-400 mb-6">
+                    No reports generated yet. Below is a live preview for the current year.
+                </p>
+                
+                <div class="border border-slate-200/80 dark:border-slate-700 rounded-lg p-4">
+                    <h3 class="text-center font-bold text-slate-800 dark:text-slate-200 text-lg mb-4">YEAR {{ current_year_for_preview }} (PREVIEW)</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="text-xs text-slate-500 uppercase font-semibold tracking-wider border-b border-slate-200/80 dark:border-slate-700">
+                                    <th class="py-3 pr-3">Month</th>
+                                    <th class="py-3 px-3">Ticks / Description</th>
+                                    <th class="py-3 px-3 text-right">Amount</th>
+                                    <th class="py-3 pl-3 text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200/80 dark:divide-slate-700 text-sm">
+                                {% for row in current_year_preview_data %}
+                                    <tr>
+                                        <td class="py-3 pr-3 font-semibold text-slate-600 dark:text-slate-300">{{ row.month_name }}</td>
+                                        <td class="py-3 px-3 text-slate-600 dark:text-slate-400 whitespace-pre-line">{{ row.ticks }}</td>
+                                        <td class="py-3 px-3 text-right font-medium text-slate-700 dark:text-slate-300">{{ row.amounts }}</td>
+                                        <td class="py-3 pl-3 text-center font-bold 
+                                            {% if row.status == 'PAID' %}text-emerald-600 dark:text-emerald-400
+                                            {% elif row.status == 'UNPAID' %}text-rose-500 dark:text-rose-400
+                                            {% else %}text-slate-400 dark:text-slate-500{% endif %}">
+                                            {{ row.status }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="border-t-2 border-slate-300/80 dark:border-slate-600">
+                                    <td colspan="2" class="pt-3 text-right font-bold text-slate-800 dark:text-slate-200">CURRENT GRAND TOTAL (PAID)</td>
+                                    <td class="pt-3 text-right font-bold text-slate-800 dark:text-slate-200">₹{{ current_year_grand_total }}</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Pay Amount Modal -->
+<div id="payAmountModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-end sm:items-center justify-center z-50">
+    <div class="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-xl p-6 shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-gray-800">Mark as Paid</h3>
+            <button type="button" onclick="toggleModal('payAmountModal')" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <p class="text-sm text-gray-500 mb-4">Total Due: <span id="payModalTotal" class="font-bold text-slate-700">₹0</span></p>
+
+        <form id="payAmountForm" method="POST">
+            <div class="mb-6">
+                <label class="block text-gray-600 text-sm font-medium mb-2">Amount You're Giving (₹)</label>
+                <input type="number" name="amount_paid" id="payModalAmountInput" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500" required>
+                <p class="text-xs text-slate-400 mt-2">Giving more? We'll remind you to collect the change. Giving less? The shortfall carries over to next month's bill.</p>
+            </div>
+            <button type="submit" class="w-full py-3.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition">Confirm Payment</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function openPayModal(docId, total) {
+    document.getElementById('payAmountForm').action = '/pay/' + docId;
+    document.getElementById('payModalTotal').textContent = '₹' + total;
+    document.getElementById('payModalAmountInput').value = total;
+    document.getElementById('payModalAmountInput').min = 0;
+    toggleModal('payAmountModal');
+}
+</script>
+
+{% endblock %}

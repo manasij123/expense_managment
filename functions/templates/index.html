@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Expense Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'><rect width='32' height='32' rx='4' fill='white'/><path d='M15.7927 8.267L16.4192 10.1679V12.9524L16.2073 13.0257C12.8977 7.34097 7.10265 9.31133 6.04208 14.0314H15.2824L14.6623 15.4591H5.89223C5.85859 15.8723 5.86091 16.1124 5.89223 16.5265H15.1752L14.6326 17.9683H6.15834C7.62067 23.1784 13.3809 23.6768 16.1815 19.7046L16.4153 19.8615V21.8434C12.3862 25.8497 5.33158 24.1134 3.95709 17.9683H2.01033L2.51414 16.5394H3.75815C3.73107 16.1165 3.72625 15.8805 3.73619 15.4591H2L2.50768 14.0327H3.91446C4.98537 8.91393 10.0557 6.56415 14.4673 8.91393L14.8781 8.267H15.7927Z' fill='%236155F5'/><path fill-rule='evenodd' clip-rule='evenodd' d='M21.2759 14.0662H25.2634L27.4453 9.24702H30V22.3308H28.0029V12.2203L26.5956 15.4462H18.4564V16.5291H26.0646L24.0421 20.9796L24.0417 20.9804H22.3917L21.0082 17.9889H18.4564V22.3308H16.4321V17.9889H14.623L15.1649 16.5299L15.1652 16.5291H16.4321V15.4462H14.6655L15.2618 14.0669L15.2622 14.0662H16.4321V9.24702H19.0411L21.2759 14.0662ZM23.0145 17.9541L23.2477 18.4976L23.4822 17.9541H23.0145ZM18.4189 12.3093V14.0469H19.2219L18.4214 12.3088L18.4189 12.3093Z' fill='%2334C759'/></svg>">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="font-sans min-h-screen">
+
+    <header class="glass-header sticky top-0 z-30 px-4 sm:px-6 py-3 flex justify-between items-center">
+        <h1 class="font-bold text-lg sm:text-xl tracking-tight text-slate-700 flex items-center">
+            <svg class="w-6 h-6 sm:w-8 sm:h-8 mr-2" viewBox="0 0 10838 6221" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5338.5 103.799L5581 842.8V1925.3L5499 1953.8C4218 -256.205 1975 509.795 1564.5 2344.8H5141L4901 2899.8H1506.5C1493.48 3060.46 1494.38 3153.81 1506.5 3314.8H5099.5L4889.5 3875.3H1609.5C2175.5 5900.79 4405 6094.56 5489 4550.3L5579.5 4611.3V5381.8C4020 6939.29 1289.5 6264.29 757.5 3875.3H4L199 3319.8H680.5C670.018 3155.39 668.151 3063.64 672 2899.8H0L196.5 2345.3H741C1155.5 355.301 3118 -558.205 4825.5 355.3L4984.5 103.799H5338.5Z" fill="#6155F5"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M7460.82 2358.29H9004.18L9848.68 484.795H10837.5V5571.29H10064.5V1640.7L9519.83 2894.79H6369.5V3315.79H9314.28L8531.46 5046L8531.32 5046.29H7892.68L7357.18 3883.29H6369.5V5571.29H5586V3883.29H4885.78L5095.53 3316.12L5095.65 3315.79H5586V2894.79H4902.24L5133.04 2358.6L5133.17 2358.29H5586V484.795H6595.82L7460.82 2358.29ZM8133.74 3869.79L8224 4081.06L8314.76 3869.79H8133.74ZM6355 1675.29V2350.79H6665.78L6355.95 1675.09L6355 1675.29Z" fill="#34C759"/>
+            </svg>
+            EXPENSE MANAGEMENT
+        </h1>
+        <div class="flex items-center gap-4">
+            <div class="flex flex-col items-end">
+                <div class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
+                    {{ now().strftime('%B %Y') }}
+                </div>
+                <div id="live-clock" class="text-xs font-mono text-slate-500 mt-1"></div>
+            </div>
+            <button id="theme-toggle" class="w-10 h-10 rounded-full text-slate-500 hover:bg-black/5 flex items-center justify-center transition">
+                <i class="fas fa-moon text-lg"></i> <!-- Moon Icon -->
+                <i class="fas fa-sun text-lg hidden"></i> <!-- Sun Icon -->
+            </button>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 max-w-3xl fade-in pb-24 mt-12">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Flat Expense Card -->
+            <a href="{{ url_for('flat_expense') }}" class="glass-card p-8 text-center group">
+                <div class="w-20 h-20 rounded-full bg-indigo-100 text-indigo-500 flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-building text-4xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-1">Flat Expenses</h2>
+                <p class="text-sm text-slate-500">Manage monthly maintenance, lift, and other flat-related costs.</p>
+            </a>
+
+            <!-- Newspaper Tracker Card -->
+            <a href="{{ url_for('newspaper') }}" class="glass-card p-8 text-center group">
+                <div class="w-20 h-20 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-newspaper text-4xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-1">Newspaper Tracker</h2>
+                <p class="text-sm text-slate-500">Track your daily newspaper deliveries and calculate monthly bills.</p>
+            </a>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

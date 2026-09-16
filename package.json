@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@lordicon/element": "^2.1.0",
+    "@lottiefiles/dotlottie-web": "^0.66.2"
+  }
+}

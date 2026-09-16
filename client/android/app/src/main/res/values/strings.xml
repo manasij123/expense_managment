@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Expense Management</string>
+    <string name="title_activity_main">Expense Management</string>
+    <string name="package_name">com.expensemanagement.app</string>
+    <string name="custom_url_scheme">com.expensemanagement.app</string>
+
+    <!-- Native newspaper-alarm engine strings (ported from mobile-alarm/) -->
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="status_signed_out">Not signed in</string>
+    <string name="status_signed_in">Signed in as %1$s</string>
+    <string name="alarm_set_for">Alarm set for %1$s</string>
+    <string name="grant_exact_alarm">Allow Exact Alarms</string>
+    <string name="grant_full_screen">Allow Full-Screen Alerts</string>
+    <string name="mark_taken_now">Mark Today\'s Paper as Taken</string>
+    <string name="test_alarm_in_1_min">Test: Fire Alarm in 1 Minute</string>
+    <string name="alarm_title">🔔 Newspaper Reminder</string>
+    <string name="alarm_body">আজকের নিউজপেপার এখনো রিসিভ করা হয়নি।</string>
+    <string name="got_it">I\'ve Got It</string>
+    <string name="already_taken">Already marked as taken today ✓</string>
+    <string name="change_alarm_time">Change Alarm Time</string>
+    <string name="skip_today">Skip Today\'s Alarm</string>
+    <string name="skipped_today">Skipped Today ✓ — Tap to Undo</string>
+    <string name="select_alarm_tone">Select Alarm Tone</string>
+    <string name="alarm_tone_label">Tone: %1$s</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="daily_alarm">Daily Alarms</string>
+    <string name="alarm_slot_1">Alarm 1</string>
+    <string name="alarm_slot_2">Alarm 2</string>
+    <string name="alarm_slot_3">Alarm 3</string>
+    <string name="permissions_needed">Permissions Needed for Reliable Alarms</string>
+    <string name="mark_taken_short">Mark Taken</string>
+    <string name="test_alarm_short">Test Alarm</string>
+    <string name="gas_alarm_title">🔥 Gas Check-in</string>
+    <string name="gas_alarm_body">এই মাসের গ্যাস সিলিন্ডার কি শেষ হয়ে গেছে? অ্যাপে গিয়ে জানান।</string>
+    <string name="gas_got_it">OK, I\'ll Check</string>
+    <string name="gas_alarm_label">Gas Check-in</string>
+    <string name="newspaper_alarms_label">Newspaper Alarms</string>
+    <string name="alarms_dashboard_label">Alarms</string>
+    <string name="gas_check_time_label">Daily Check Time</string>
+    <string name="gas_alarm_hint">Rings only when a check-in is actually due</string>
+</resources>

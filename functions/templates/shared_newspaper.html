@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}{{ month_name }} {{ year }} - Newspaper Report{% endblock %}
+
+{% block header_content %}
+<div class="flex items-center">
+    <h1 class="font-bold text-lg sm:text-xl tracking-tight text-slate-700 flex items-center">
+        <i data-lucide="newspaper" class="w-8 h-8 text-orange-500 mr-2"></i>
+        Report: {{ month_name }} {{ year }}
+    </h1>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="glass-card p-5 mb-6 flex flex-col items-center justify-center text-center">
+    <p class="font-bold text-slate-600 uppercase tracking-wider text-sm mb-1">Total Amount Due</p>
+    <p class="text-4xl font-extrabold text-slate-800">₹{{ record.total_amount }}</p>
+    
+    <!-- Bill Breakdown -->
+    {% set extra_total = record.total_amount|int - (taken_sundays|int * 7) - (taken_weekdays|int * 6) %}
+    <div class="w-full mt-5">
+        <p class="text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wider text-center">Bill Breakdown</p>
+        <div class="grid grid-cols-3 gap-2 sm:gap-3 text-center">
+            <div class="bg-amber-50 border border-amber-200 dark:bg-amber-900/30 dark:border-amber-800/50 rounded-xl py-2 flex flex-col items-center justify-center shadow-sm">
+                <p class="text-[9px] text-amber-600 dark:text-amber-400 font-bold mb-1 uppercase">Sundays (x ₹7)</p>
+                <p class="text-sm font-black text-amber-700 dark:text-amber-300">{{ taken_sundays }} <span class="text-[10px] font-medium opacity-80">= ₹{{ taken_sundays|int * 7 }}</span></p>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-800/50 rounded-xl py-2 flex flex-col items-center justify-center shadow-sm">
+                <p class="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold mb-1 uppercase">Weekdays (x ₹6)</p>
+                <p class="text-sm font-black text-emerald-700 dark:text-emerald-300">{{ taken_weekdays }} <span class="text-[10px] font-medium opacity-80">= ₹{{ taken_weekdays|int * 6 }}</span></p>
+            </div>
+            <div class="bg-indigo-50 border border-indigo-200 dark:bg-indigo-900/30 dark:border-indigo-800/50 rounded-xl py-2 flex flex-col items-center justify-center shadow-sm">
+                <p class="text-[9px] text-indigo-600 dark:text-indigo-400 font-bold mb-1 uppercase">Extra Papers</p>
+                <p class="text-sm font-black text-indigo-700 dark:text-indigo-300">₹{{ extra_total }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4 flex gap-4 text-xs font-bold bg-white/50 px-4 py-2 rounded-lg border border-slate-200">
+        <span class="text-emerald-600">{{ taken_sundays + taken_weekdays }} Delivered</span>
+        <span class="text-slate-300">|</span>
+        <span class="text-rose-500">{{ missed_days }} Missed</span>
+    </div>
+</div>
+
+<!-- Read-Only Calendar -->
+<div class="glass-card p-4">
+    <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-slate-500 mb-3">
+        <span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span>
+    </div>
+
+    <div class="grid grid-cols-7 gap-2">
+        {% for week in month_days %}
+            {% for day in week %}
+                {% if day == 0 %}
+                    <div class="day-cell empty"></div>
+                {% else %}
+                    {% set is_sunday = loop.index0 == 0 %}
+                    {% set is_past = (year < today.year) or (year == today.year and record.month < today.month) or (year == today.year and record.month == today.month and day < today.day) %}
+                    {% set is_taken = record.days_taken[day|string] %}
+                    {% set extra_amt = record.extra_papers.get(day|string, 0)|int if record.extra_papers else 0 %}
+                    {% set is_split = is_taken and extra_amt > 0 %}
+
+                    {% set cell_class = '' %}
+                    {% if is_split %}
+                        {% set cell_class = 'taken-and-extra' %}
+                        {% if is_sunday %}
+                            {% set cell_class = cell_class ~ ' !border-none !shadow-[0_0_15px_rgba(255,0,0,0.6)]' %}
+                        {% endif %}
+                    {% elif is_taken %}
+                        {% if is_sunday %}
+                            {% set cell_class = 'bg-[#37CA6D] text-white !shadow-[0_0_15px_rgba(255,0,0,0.6)] !border-none taken' %}
+                        {% else %}
+                            {% set cell_class = 'bg-emerald-500 text-white shadow-sm border-none taken' %}
+                        {% endif %}
+                    {% elif extra_amt > 0 %}
+                        {% set cell_class = 'extra-only' %}
+                        {% if is_sunday %}
+                            {% set cell_class = cell_class ~ ' !border-none !shadow-[0_0_15px_rgba(255,0,0,0.6)]' %}
+                        {% endif %}
+                    {% elif is_past %}
+                        {% set cell_class = 'missed' %}
+                        {% if is_sunday %}
+                            {% set cell_class = cell_class ~ ' !bg-rose-100 !border-rose-500 shadow-[0_0_15px_rgba(255,0,0,0.3)]' %}
+                        {% endif %}
+                    {% else %}
+                        {% if is_sunday %}
+                            {% set cell_class = 'bg-rose-50 text-rose-500 border border-rose-200 dark:bg-rose-900/20 dark:border-rose-800 dark:text-rose-400 shadow-[0_0_10px_rgba(255,0,0,0.2)] not-taken' %}
+                        {% else %}
+                            {% set cell_class = 'bg-slate-100 text-slate-400 border border-slate-200 not-taken' %}
+                        {% endif %}
+                    {% endif %}
+
+                    <a href="#" 
+                       class="day-cell flex items-center justify-center rounded-xl font-bold h-12 w-full transition-transform hover:scale-105 relative {{ cell_class }}"
+                       data-day="{{ day }}"
+                       data-istaken="{{ 'true' if is_taken else 'false' }}"
+                       data-extra="{{ extra_amt }}"
+                       onclick="showReadOnlyDayDetails(event, this.dataset.day, this.dataset.istaken === 'true', this.dataset.extra)"
+                       title="View Details for {{ day }} {{ month_name }}">
+                        {{ day }}
+                        {% if extra_amt > 0 %}
+                        <span class="absolute -top-1.5 -right-1.5 bg-white border border-indigo-500 text-indigo-600 text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-md pointer-events-none z-20">
+                            +₹{{ extra_amt }}
+                        </span>
+                        {% endif %}
+                    </a>
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Read-Only Day Details Modal -->
+<div id="ro-dayDetailsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-slate-800 w-11/12 max-w-sm rounded-3xl p-6 transform transition-all shadow-2xl relative scale-95 opacity-0" id="ro-dayDetailsContent">
+        <button onclick="closeReadOnlyDayDetails()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+        
+        <h3 class="text-xl font-black text-slate-800 dark:text-slate-100 mb-1 text-center">Day <span id="ro-dayDetailsTitle"></span></h3>
+        <p class="text-center text-xs text-slate-500 font-medium mb-6">Delivery Details</p>
+        
+        <div class="flex justify-center gap-6 mb-2">
+            <!-- Regular Paper Circle -->
+            <div class="flex flex-col items-center w-1/2">
+                <div id="ro-dailyPaperCircle" class="w-20 h-20 rounded-full flex items-center justify-center shadow-xl border-4">
+                    <i data-lucide="newspaper" class="w-10 h-10"></i>
+                </div>
+                <span class="text-sm font-bold text-slate-700 mt-3 text-center leading-tight">Daily Paper</span>
+                <span class="text-xs font-bold mt-1 text-center" id="ro-dailyPaperPrice"></span>
+            </div>
+
+            <!-- Extra Paper Circle -->
+            <div class="flex flex-col items-center w-1/2">
+                <div id="ro-extraPaperCircle" class="w-20 h-20 rounded-full flex items-center justify-center shadow-xl border-4">
+                    <i data-lucide="plus-circle" class="w-10 h-10"></i>
+                </div>
+                <span class="text-sm font-bold text-slate-700 mt-3 text-center leading-tight">Extra Paper</span>
+                <span class="text-[10px] font-bold mt-1 text-center" id="ro-extraPaperPrice"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.day-cell.missed {
+    background-color: #fff1f2;
+    color: #e11d48;
+    border: 2px solid #fb7185;
+    font-weight: 700;
+}
+.day-cell.taken-and-extra {
+    background: linear-gradient(135deg, #10b981 50%, #6366f1 50%);
+    color: white;
+    border: none;
+    font-weight: 700;
+}
+.day-cell.extra-only {
+    background-color: #6366f1;
+    color: white;
+    border: none;
+    font-weight: 700;
+}
+</style>
+
+<script>
+function showReadOnlyDayDetails(event, day, isTaken, extraAmt) {
+    event.preventDefault();
+    document.getElementById('ro-dayDetailsTitle').innerText = day;
+    
+    const dailyCircle = document.getElementById('ro-dailyPaperCircle');
+    const extraCircle = document.getElementById('ro-extraPaperCircle');
+    const dailyPrice = document.getElementById('ro-dailyPaperPrice');
+    const extraPrice = document.getElementById('ro-extraPaperPrice');
+    
+    const isTakenBool = (isTaken === 'true' || isTaken === true);
+    
+    if (isTakenBool) {
+        dailyCircle.className = 'w-20 h-20 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xl border-4 border-emerald-100';
+        dailyPrice.innerText = "Regular (Delivered)";
+        dailyPrice.className = "text-xs text-emerald-600 font-bold mt-1 text-center";
+    } else {
+        dailyCircle.className = 'w-20 h-20 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center shadow-xl border-4 border-slate-100';
+        dailyPrice.innerText = "Regular (Missed)";
+        dailyPrice.className = "text-xs text-slate-400 font-bold mt-1 text-center";
+    }
+    
+    if (parseInt(extraAmt, 10) > 0) {
+        extraCircle.className = 'w-20 h-20 rounded-full bg-indigo-500 text-white flex items-center justify-center shadow-xl border-4 border-indigo-100';
+        extraPrice.innerText = "+₹" + extraAmt;
+        extraPrice.className = "text-xs text-indigo-600 font-bold mt-1 text-center";
+    } else {
+        extraCircle.className = 'w-20 h-20 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center shadow-xl border-4 border-slate-100';
+        extraPrice.innerText = "No Extra Paper";
+        extraPrice.className = "text-[10px] text-slate-400 font-bold mt-1 text-center";
+    }
+    
+    const modal = document.getElementById('ro-dayDetailsModal');
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        document.getElementById('ro-dayDetailsContent').classList.remove('scale-95', 'opacity-0');
+    }, 10);
+}
+
+function closeReadOnlyDayDetails() {
+    document.getElementById('ro-dayDetailsContent').classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        document.getElementById('ro-dayDetailsModal').classList.add('hidden');
+    }, 200);
+}
+</script>
+{% endblock %}

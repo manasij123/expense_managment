@@ -1,0 +1,39 @@
+# --- Secrets / credentials — NEVER commit these ---
+serviceAccountKey.json
+google-services.json
+*.keystore
+local.properties
+.env
+.env.*
+
+# --- Node ---
+node_modules/
+
+# --- Python / Flask ---
+functions/venv/
+functions/__pycache__/
+**/__pycache__/
+*.pyc
+functions/firebase-debug.log
+firebase-debug.log
+
+# --- Firebase CLI ---
+.firebase/
+
+# --- Vite build output ---
+client/dist/
+
+# --- Android / Gradle build artifacts ---
+client/android/build/
+client/android/app/build/
+client/android/capacitor-cordova-android-plugins/
+client/android/.gradle/
+mobile-alarm/build/
+mobile-alarm/app/build/
+mobile-alarm/.gradle/
+*.apk
+*.aab
+
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db

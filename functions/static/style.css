@@ -1,0 +1,374 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    /* Mild Colorful Gradient for Glassmorphism */
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    color: #475569; /* Slate-600 for softer text */
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Staggered Row Animation */
+.stagger-row {
+    opacity: 0;
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+.animate-bounce-up {
+    animation: bounceUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes bounceUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* --- Glassmorphism Design System --- */
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.65);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.12);
+}
+
+.glass-header {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.glass-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.glass-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    opacity: 0.95;
+}
+
+.glass-btn-secondary {
+    background: rgba(255, 255, 255, 0.7);
+    color: #475569;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+}
+
+.glass-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+}
+
+.engraved-text {
+    color: #64748b;
+    text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.8);
+}
+
+/* Modern Gradient Text */
+.text-gradient {
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* --- Responsive Design Adjustments --- */
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    /* Full width buttons on mobile */
+    .action-buttons > * {
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+    }
+}
+
+/* Step 3.5: Reduce header title size on very small screens */
+@media (max-width: 420px) {
+    .glass-header h1 {
+        font-size: 1rem; /* text-base */
+    }
+}
+
+/* Step 4: Fix for History Page button on narrow screens */
+@media (max-width: 550px) {
+    .pay-now-btn {
+        padding: 0.3rem 0.5rem !important;
+        font-size: 0.65rem !important;
+        white-space: nowrap;
+    }
+
+    /* Reduce table cell padding to give more space */
+    th.px-6, td.px-6 {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+}
+
+/* --- Responsive Table for index.html on small screens --- */
+@media (max-width: 640px) {
+    .responsive-table thead {
+        display: none;
+    }
+
+    .responsive-table tr:not(.hidden):not([id^="cal-"]) {
+        display: block;
+        padding: 1rem 0.5rem;
+    }
+    
+    .responsive-table tr.total-row:not(.hidden) {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 1.125rem;
+        padding-top: 1rem;
+    }
+
+    .responsive-table td:not([colspan]) {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0.25rem;
+        border: none;
+        text-align: right;
+    }
+
+    .responsive-table td:not([colspan]):before {
+        content: attr(data-label);
+        text-align: left;
+        font-weight: 600; /* slate-500 */
+        color: #64748b;
+    }
+
+    .responsive-table tbody td.description-cell {
+        justify-content: center;
+        padding-bottom: 0.5rem;
+        font-size: 1.125rem;
+        font-weight: 700;
+    }
+
+    .responsive-table tbody td.description-cell:before {
+        content: ""; /* No label for the main description */
+    }
+}
+
+/* --- Dark Mode Overrides (Hybrid/Neumorphic Theme) --- */
+
+body.dark {
+    background: #111827; /* Dark blue-gray */
+    color: #d1d5db;
+    background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.07) 1px, transparent 0);
+}
+
+body.dark .glass-header {
+    background: rgba(17, 24, 39, 0.7);
+    border-bottom-color: #374151;
+}
+
+body.dark .glass-card {
+    background: rgba(31, 41, 55, 0.5);
+    border-color: rgba(55, 65, 81, 0.7);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Buttons become Neumorphic in Dark Mode */
+body.dark .glass-btn,
+body.dark .glass-btn-secondary {
+    background: #1f2937;
+    color: #d1d5db;
+    box-shadow: 5px 5px 10px #0b0f1a, -5px -5px 10px #2d3a4d;
+    border: 1px solid #374151;
+}
+
+body.dark .glass-btn:hover,
+body.dark .glass-btn-secondary:hover {
+    opacity: 1;
+    transform: translateY(0);
+    background: #1f2937;
+    box-shadow: 3px 3px 6px #0b0f1a, -3px -3px 6px #2d3a4d;
+}
+
+body.dark .glass-btn:active,
+body.dark .glass-btn-secondary:active {
+    box-shadow: inset 3px 3px 6px #0b0f1a, inset -3px -3px 6px #2d3a4d;
+}
+
+/* Text & Element Color Overrides */
+body.dark .text-slate-800 { color: #f1f5f9; }
+body.dark .text-slate-700 { color: #f9fafb; }
+body.dark .text-slate-600, body.dark .engraved-text { color: #9ca3af; }
+body.dark .text-slate-500 { color: #6b7280; }
+body.dark .text-slate-400 { color: #4b5563; }
+body.dark .engraved-text { text-shadow: none; }
+
+body.dark .fa-chart-pie, body.dark .text-indigo-500 { color: #818cf8; }
+body.dark .text-indigo-600 { color: #a5b4fc; }
+body.dark .bg-indigo-50 { background-color: rgba(79, 70, 229, 0.2); }
+body.dark .border-indigo-100 { border-color: #4f46e5; }
+body.dark .bg-indigo-100 { background-color: rgba(99, 102, 241, 0.15); }
+body.dark .text-emerald-600 { color: #34d399; }
+body.dark .bg-emerald-100 { background-color: rgba(16, 185, 129, 0.15); }
+body.dark .text-rose-500 { color: #fb7185; }
+body.dark .bg-rose-100 { background-color: rgba(244, 63, 94, 0.15); }
+body.dark .bg-orange-100 { background-color: rgba(251, 146, 60, 0.15); }
+body.dark .text-orange-500 { color: #fb923c; }
+body.dark .bg-white\/30 { background-color: rgba(31, 41, 55, 0.5); }
+body.dark .border-slate-200\/50, body.dark .border-slate-100\/50 { border-color: #374151; }
+body.dark .hover\:bg-white\/40:hover { background-color: rgba(55, 65, 81, 0.5); }
+body.dark #theme-toggle { color: #9ca3af; }
+body.dark #theme-toggle:hover { background-color: rgba(255, 255, 255, 0.05); }
+
+/* Dark mode for user profile */
+body.dark .user-profile img { border-color: #374151; }
+body.dark .user-profile a { color: #9ca3af; }
+body.dark .user-profile a:hover { background-color: rgba(255, 255, 255, 0.05); }
+
+/* --- User Profile in Header --- */
+.user-profile {
+    position: relative;
+}
+
+.user-profile-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: pointer;
+}
+
+.user-dropdown {
+    position: absolute;
+    right: 0;
+    top: 50px;
+    min-width: 160px;
+    z-index: 50;
+}
+
+/* --- New Payment Grid --- */
+.month-block {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 1; /* Makes it a square */
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+    cursor: default;
+}
+
+.month-block:hover {
+    transform: scale(1.1);
+}
+
+/* Light Mode States */
+.month-block.unpaid {
+    background-color: #f1f5f9; /* slate-100 */
+    color: #94a3b8; /* slate-400 */
+    border: 1px solid #e2e8f0; /* slate-200 */
+}
+
+.month-block.paid {
+    background: #22c55e; /* green-500 */
+    color: white;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.month-block.current {
+    border: 2px solid #6366f1; /* indigo-500 */
+}
+
+/* Dark Mode Overrides */
+body.dark .payment-grid .month-block.unpaid { background-color: #374151; color: #6b7280; border-color: #4b5563; }
+body.dark .payment-grid .month-block.paid { background: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+body.dark .payment-grid .month-block.current { border-color: #818cf8; }
+
+/* --- Newspaper Calendar Styles --- */
+.day-cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%; /* Circle */
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+.day-cell.empty {
+    background: transparent;
+    cursor: default;
+}
+.day-cell.not-taken {
+    background-color: rgba(255, 255, 255, 0.5);
+    color: #64748b; /* slate-500 */
+    border-color: #e2e8f0;
+}
+.day-cell.not-taken:hover { background-color: rgba(255, 255, 255, 0.9); transform: scale(1.05); }
+.day-cell.taken { background: #22c55e; color: white; box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4); }
+.day-cell.taken:hover { transform: scale(1.05); opacity: 0.9; }
+
+/* Dark Mode for Newspaper Calendar */
+body.dark .day-cell.not-taken { background-color: #374151; color: #9ca3af; border-color: #4b5563; }
+body.dark .day-cell.not-taken:hover { background-color: #4b5563; }
+body.dark .day-cell.taken { background-color: #10b981; }
+
+@font-face {
+  font-family: 'icomoon';
+  src:  url('fonts/icomoon.eot?994an4');
+  src:  url('fonts/icomoon.eot?994an4#iefix') format('embedded-opentype'),
+    url('fonts/icomoon.ttf?994an4') format('truetype'),
+    url('fonts/icomoon.woff?994an4') format('woff'),
+    url('fonts/icomoon.svg?994an4#icomoon') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'icomoon' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-durga2:before {
+  content: "\e900";
+}

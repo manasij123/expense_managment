@@ -1,0 +1,2084 @@
+/* Group 6 */
+
+position: absolute;
+width: 1613px;
+height: 1613px;
+left: 760px;
+top: 3017px;
+
+
+
+/* Ellipse 11 */
+
+position: absolute;
+width: 1613px;
+height: 1613px;
+left: 760px;
+top: 3017px;
+
+background: linear-gradient(90deg, #22C55E 44.23%, #6366F1 55.77%);
+
+
+/* Line 1 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3036px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 17 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3182px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 33 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3328px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 49 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3474px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 65 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3620px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 81 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3766px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 97 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3912px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 113 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4058px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 129 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4204px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 145 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4350px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 161 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4496px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 9 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3171px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 18 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3317px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 34 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3463px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 50 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3609px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 66 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3755px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 82 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3901px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 98 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4047px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 114 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4193px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 130 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4339px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 146 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4485px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 2 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1566px;
+top: 3045px;
+
+border: 11px solid #22C55E;
+
+
+/* Line 19 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1566px;
+top: 3191px;
+
+border: 11px solid #22C55E;
+
+
+/* Line 35 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1566px;
+top: 3337px;
+
+border: 11px solid #22C55E;
+
+
+/* Line 51 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1566px;
+top: 3483px;
+
+border: 11px solid #22C55E;
+
+
+/* Line 67 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1566px;
+top: 3629px;
+
+border: 11px solid #22C55E;
+
+
+/* Line 83 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1566px;
+top: 3775px;
+
+border: 11px solid #22C55E;
+
+
+/* Line 99 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1566px;
+top: 3921px;
+
+border: 11px solid #22C55E;
+
+
+/* Line 115 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1566px;
+top: 4067px;
+
+border: 11px solid #22C55E;
+
+
+/* Line 131 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1566px;
+top: 4213px;
+
+border: 11px solid #22C55E;
+
+
+/* Line 147 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1566px;
+top: 4359px;
+
+border: 11px solid #22C55E;
+
+
+/* Line 163 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1566px;
+top: 4505px;
+
+border: 11px solid #22C55E;
+
+
+/* Line 10 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1378px;
+top: 3164px;
+
+border: 11px solid #6366F1;
+transform: rotate(180deg);
+
+
+/* Line 20 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1378px;
+top: 3310px;
+
+border: 11px solid #6366F1;
+transform: rotate(180deg);
+
+
+/* Line 36 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1378px;
+top: 3456px;
+
+border: 11px solid #6366F1;
+transform: rotate(180deg);
+
+
+/* Line 52 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1378px;
+top: 3602px;
+
+border: 11px solid #6366F1;
+transform: rotate(180deg);
+
+
+/* Line 68 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1378px;
+top: 3748px;
+
+border: 11px solid #6366F1;
+transform: rotate(180deg);
+
+
+/* Line 84 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1378px;
+top: 3894px;
+
+border: 11px solid #6366F1;
+transform: rotate(180deg);
+
+
+/* Line 100 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1378px;
+top: 4040px;
+
+border: 11px solid #6366F1;
+transform: rotate(180deg);
+
+
+/* Line 116 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1378px;
+top: 4186px;
+
+border: 11px solid #6366F1;
+transform: rotate(180deg);
+
+
+/* Line 132 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1378px;
+top: 4332px;
+
+border: 11px solid #6366F1;
+transform: rotate(180deg);
+
+
+/* Line 148 */
+
+position: absolute;
+width: 188px;
+height: 0px;
+left: 1378px;
+top: 4478px;
+
+border: 11px solid #6366F1;
+transform: rotate(180deg);
+
+
+/* Line 3 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3054px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 21 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3200px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 37 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3346px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 53 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3492px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 69 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3638px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 85 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3784px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 101 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3930px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 117 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4076px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 133 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4222px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 149 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4368px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 165 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4514px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 11 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3155px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 22 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3301px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 38 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3447px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 54 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3593px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 70 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3739px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 86 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3885px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 102 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4031px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 118 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4177px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 134 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4323px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 150 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4469px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 4 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3063px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 23 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3209px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 39 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3355px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 55 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3501px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 71 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3647px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 87 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3793px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 103 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3939px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 119 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4085px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 135 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4231px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 151 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4377px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 167 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4523px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 12 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3146px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 24 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3292px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 40 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3438px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 56 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3584px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 72 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3730px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 88 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3876px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 104 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4022px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 120 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4168px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 136 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4314px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 152 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4460px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 168 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4606px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 5 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3072px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 25 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3218px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 41 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3364px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 57 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3510px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 73 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3656px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 89 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3802px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 105 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3948px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 121 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4094px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 137 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4240px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 153 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4386px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 169 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4532px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 13 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3137px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 26 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3283px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 42 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3429px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 58 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3575px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 74 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3721px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 90 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3867px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 106 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4013px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 122 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4159px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 138 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4305px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 154 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4451px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 170 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4597px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 6 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3081px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 27 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3227px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 43 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3373px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 59 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3519px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 75 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3665px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 91 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3811px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 107 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3957px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 123 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4103px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 139 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4249px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 155 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4395px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 171 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4541px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 14 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3128px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 28 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3274px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 44 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3420px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 60 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3566px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 76 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3712px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 92 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3858px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 108 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4004px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 124 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4150px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 140 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4296px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 156 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4442px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 172 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4588px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 7 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3090px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 29 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3236px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 45 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3382px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 61 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3528px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 77 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3674px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 93 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3820px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 109 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3966px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 125 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4112px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 141 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4258px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 157 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4404px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 173 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4550px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 15 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3119px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 30 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3265px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 46 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3411px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 62 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3557px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 78 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3703px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 94 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3849px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 110 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3995px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 126 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4141px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 142 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4287px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 158 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4433px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 174 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4579px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 8 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3099px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 31 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3245px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 47 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3391px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 63 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3537px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 79 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3683px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 95 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3829px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 111 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 3975px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 127 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4121px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 143 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4267px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 159 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4413px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 175 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1566.01px;
+top: 4559px;
+
+border: 11px solid #22C55E;
+transform: rotate(0.61deg);
+
+
+/* Line 16 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3110px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 32 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3256px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 48 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3402px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 64 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3548px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 80 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3694px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 96 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3840px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 112 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 3986px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 128 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4132px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 144 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4278px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 160 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4424px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);
+
+
+/* Line 176 */
+
+position: absolute;
+width: 188.01px;
+height: 0px;
+left: 1378px;
+top: 4570px;
+
+border: 11px solid #6366F1;
+transform: rotate(-179.39deg);

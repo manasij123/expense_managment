@@ -1,0 +1,8 @@
+Flask
+Flask-Login
+firebase-admin
+firebase-functions
+werkzeug<3.0.0
+fpdf2
+apscheduler
+itsdangerous

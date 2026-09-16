@@ -1,0 +1,39 @@
+{
+  "hosting": {
+    "public": "client/dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "function": "expensemanagement"
+      },
+      {
+        "source": "/authorize",
+        "function": "expensemanagement"
+      },
+      {
+        "source": "/save_fcm_token",
+        "function": "expensemanagement"
+      },
+      {
+        "source": "/search_history",
+        "function": "expensemanagement"
+      },
+      {
+        "source": "/logout",
+        "function": "expensemanagement"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "functions": {
+    "source": "functions"
+  }
+}

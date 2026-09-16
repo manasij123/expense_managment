@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
+    <!-- Flat Expense Card -->
+    <a href="{{ url_for('flat_expense') }}" class="glass-card p-8 text-center group loader-link"
+        data-animation="{{ url_for('static', filename='animations/flat-expenses.json') }}"
+        data-text="Loading Flat Expenses...">
+        <div
+            class="w-20 h-20 rounded-full bg-indigo-100 text-indigo-500 flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300">
+            <i data-lucide="building" class="w-10 h-10"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800 mb-1">Flat Expenses</h2>
+        <p class="text-sm text-slate-500">Manage monthly maintenance, lift, and other flat-related costs.</p>
+    </a>
+
+    <!-- Newspaper Tracker Card -->
+    <a href="{{ url_for('newspaper') }}" class="glass-card p-8 text-center group loader-link"
+        data-animation="{{ url_for('static', filename='animations/newspaper-expenses.json') }}"
+        data-text="Loading Newspaper Tracker...">
+        <div
+            class="w-20 h-20 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300">
+            <i data-lucide="newspaper" class="w-10 h-10"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800 mb-1">Newspaper Tracker</h2>
+        <p class="text-sm text-slate-500">Track your daily newspaper deliveries and calculate monthly bills.</p>
+    </a>
+</div>
+
+<!-- Floating Alarm Button -->
+<button onclick="document.getElementById('alarm-modal').classList.remove('hidden')" class="fixed bottom-6 right-6 bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-full shadow-lg hover:shadow-indigo-500/50 transition-all transform hover:scale-105 flex items-center justify-center group z-40">
+    <svg class="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+    <span class="absolute hidden group-hover:block bottom-16 right-0 bg-slate-800 text-white text-xs px-3 py-1.5 rounded-lg shadow-md whitespace-nowrap">Alarm Settings</span>
+</button>
+
+<!-- Alarm Settings Modal (Pop-up) -->
+<div id="alarm-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-11/12 max-w-md transform transition-all border border-slate-100 dark:border-slate-700">
+        <!-- Modal Header -->
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <span>🔔</span> Alarm Settings
+            </h3>
+            <button onclick="document.getElementById('alarm-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition bg-slate-100 dark:bg-slate-700 rounded-full p-1.5">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <div class="space-y-5">
+            <!-- Push Notification Toggle -->
+            <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600">
+                <div>
+                    <p class="text-slate-700 dark:text-white font-bold">Push Notifications</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Receive daily reminder alarms</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="enable-notification-toggle" class="sr-only peer">
+                    <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                </label>
+            </div>
+
+            <!-- Alarm Sound Select -->
+            <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600">
+                <label for="alarm-sound" class="block text-slate-700 dark:text-white font-bold mb-1">Select Alarm Sound</label>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Plays when the dashboard is open</p>
+                <select id="alarm-sound" class="w-full p-2.5 border border-slate-300 dark:border-slate-500 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition cursor-pointer">
+                    <option value="default.mp3">Default Beep</option>
+                    <option value="bell.mp3">Classic Bell</option>
+                    <option value="digital.mp3">Digital Clock</option>
+                    <option value="radar.mp3">Radar</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Modal Footer -->
+        <div class="mt-6 flex justify-end">
+            <button onclick="document.getElementById('alarm-modal').classList.add('hidden')" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors w-full">
+                Done
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Firebase Messaging Scripts -->
+<script>
+    // 1. সাউন্ড স্টোরেজ এবং সিলেক্ট করা
+    const alarmSoundSelect = document.getElementById('alarm-sound');
+    const savedSound = localStorage.getItem('preferredAlarmSound');
+    if (savedSound) {
+        alarmSoundSelect.value = savedSound;
+    }
+    
+    alarmSoundSelect.addEventListener('change', (e) => {
+        localStorage.setItem('preferredAlarmSound', e.target.value);
+        // সাউন্ড সিলেক্ট করার সময় একবার বাজিয়ে শোনানো (Testing)
+        let audio = new Audio('/static/sounds/' + e.target.value);
+        audio.play().catch(err => console.log('Preview block:', err));
+    });
+
+    // 2. টগল বাটন লজিক (Enable Notifications)
+    const notificationToggle = document.getElementById('enable-notification-toggle');
+    
+    // যদি ব্রাউজারে আগে থেকেই পারমিশন থাকে, তাহলে টগলটি অন করে রাখা
+    if (Notification.permission === 'granted') {
+        notificationToggle.checked = true;
+    }
+
+    notificationToggle.addEventListener('change', async (e) => {
+        if (e.target.checked) {
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    const registration = await navigator.serviceWorker.register('/static/firebase-messaging-sw.js');
+                    const currentToken = await messaging.getToken({ 
+                        vapidKey: 'BDUxpgI8t4NQ-_JItkwP2zRp3E_jH9A9Md4u8JaeLjLE1dF-vU2ufYxIByiqY4X4hpDAltvTYghCsMH-Qjxjqgg', 
+                        serviceWorkerRegistration: registration 
+                    });
+                    
+                    if (currentToken) {
+                        await fetch('/save_fcm_token', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ token: currentToken })
+                        });
+                        alert('Notifications activated successfully!');
+                    }
+                } else {
+                    e.target.checked = false;
+                    alert('You denied the notification permission!');
+                }
+            } catch (error) {
+                console.error('Error getting token:', error);
+                e.target.checked = false;
+            }
+        } else {
+            alert("Please go to your browser's site settings to completely disable notifications.");
+            e.target.checked = true;
+        }
+    });
+
+    // 3. ড্যাশবোর্ড খোলা থাকা অবস্থায় সাউন্ড বাজানো (Foreground Message)
+    if (typeof messaging !== 'undefined') {
+        messaging.onMessage((payload) => {
+            console.log('Foreground Message received: ', payload);
+            
+            // ফোরগ্রাউন্ডে আসলে সাউন্ড বাজানোর ফাংশন কল করা হলো
+            playAlarmSound();
+            
+            // স্ক্রিনে সুন্দর করে পপ-আপ দেখানো
+            alert("🔔 " + payload.notification.title + "\n\n" + payload.notification.body);
+        });
+    }
+
+    // ৫ বার কাস্টম সাউন্ড বাজানোর ফাংশন
+    function playAlarmSound() {
+        const currentSound = localStorage.getItem('preferredAlarmSound') || 'default.mp3';
+        const audio = new Audio('/static/sounds/' + currentSound);
+        let playCount = 0;
+        
+        // একবার সাউন্ড শেষ হলে চেক করবে ৫ বার হয়েছে কি না
+        audio.addEventListener('ended', () => {
+            playCount++;
+            if (playCount < 5) {
+                audio.play();
+            }
+        });
+        
+        // প্লে করা
+        audio.play().catch(err => {
+            console.error("Audio playback blocked by browser:", err);
+            console.log("Tip: You need to click somewhere on the dashboard first to allow audio.");
+        });
+    }
+</script>
+
+{% endblock %}
