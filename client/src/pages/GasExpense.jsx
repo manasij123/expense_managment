@@ -114,8 +114,12 @@ export default function GasExpense() {
     }
   }
 
+  // "2026-09-18" alone parses as UTC midnight, which is 5:30am IST — for
+  // hours before that, "now" would come out earlier than the parsed
+  // instant and the day count would go negative. Appending a local
+  // midnight time parses it in the device's own timezone instead.
   const daysSinceInstalled = active
-    ? Math.floor((new Date() - new Date(active.installed_date)) / (1000 * 60 * 60 * 24))
+    ? Math.max(0, Math.floor((new Date() - new Date(`${active.installed_date}T00:00:00`)) / (1000 * 60 * 60 * 24)))
     : null;
 
   return (
