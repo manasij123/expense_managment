@@ -627,6 +627,39 @@ def api_gas_book():
     return jsonify({'status': 'success'})
 
 
+@api_bp.route('/gas/add_existing', methods=['POST'])
+@login_required
+def api_gas_add_existing():
+    """For the very first cylinder: most people already have gas connected
+    when they start using this page, rather than booking their first one
+    through here. Registers it as active immediately, no booking/delivery
+    step needed."""
+    data = request.get_json(silent=True) or {}
+    try:
+        price = int(data.get('price'))
+    except (TypeError, ValueError):
+        return jsonify({'status': 'error', 'message': 'Please enter a valid price.'}), 400
+    if price <= 0:
+        return jsonify({'status': 'error', 'message': 'Price must be greater than 0.'}), 400
+
+    installed_date = (data.get('installed_date') or '').strip()
+    try:
+        parsed = core.datetime.strptime(installed_date, '%Y-%m-%d')
+    except ValueError:
+        return jsonify({'status': 'error', 'message': 'Please enter a valid installed date.'}), 400
+    if parsed.date() > core.get_ist_now().date():
+        return jsonify({'status': 'error', 'message': 'Installed date cannot be in the future.'}), 400
+
+    active, _ = core.get_active_gas_cylinder(current_user.id)
+    pending_order, _ = core.get_pending_gas_order(current_user.id)
+    stored, _ = core.get_stored_gas_cylinder(current_user.id)
+    if active or pending_order or stored:
+        return jsonify({'status': 'error', 'message': 'You already have a cylinder being tracked.'}), 400
+
+    core.add_existing_active_gas_cylinder(current_user.id, price, installed_date)
+    return jsonify({'status': 'success'})
+
+
 @api_bp.route('/gas/snooze', methods=['POST'])
 @login_required
 def api_gas_snooze():

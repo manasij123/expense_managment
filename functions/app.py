@@ -467,6 +467,30 @@ def book_gas_cylinder(user_id, price):
     db.collection('users').document(user_id).collection('gas_cylinders').add(new_doc)
     return new_doc
 
+def add_existing_active_gas_cylinder(user_id, price, installed_date):
+    """Registers a cylinder that was already connected and in use before the
+    user started tracking it in this app — most people have gas running
+    already when they first open this page, they didn't just book it
+    through here. Skips the ordered -> stored pipeline entirely and goes
+    straight to active, with the check-in clock starting from the given
+    installed date rather than today."""
+    installed_dt = datetime.strptime(installed_date, '%Y-%m-%d')
+    next_check = (installed_dt + timedelta(days=GAS_CHECK_IN_AFTER_DAYS)).strftime('%Y-%m-%d')
+    new_doc = {
+        'booked_date': installed_date,
+        'received_date': installed_date,
+        'installed_date': installed_date,
+        'price': price,
+        'status': 'active',
+        'finished_date': None,
+        'next_check_date': next_check,
+        'last_notified_date': None,
+        'delivery_code': None,
+        'created_at': firestore.SERVER_TIMESTAMP,
+    }
+    db.collection('users').document(user_id).collection('gas_cylinders').add(new_doc)
+    return new_doc
+
 def mark_gas_delivered(user_id):
     """Confirms the ordered cylinder has arrived — it becomes a stored
     spare, full but not connected. Whatever's currently active (if

@@ -33,6 +33,9 @@ export default function GasExpense() {
   const [tab, setTab] = useState('record'); // 'record' | 'alarming'
   const [codeModalOpen, setCodeModalOpen] = useState(false);
   const [code, setCode] = useState('');
+  const [existingModalOpen, setExistingModalOpen] = useState(false);
+  const [existingPrice, setExistingPrice] = useState('');
+  const [existingDate, setExistingDate] = useState('');
 
   function load() {
     api.get('/api/gas').then((res) => {
@@ -97,6 +100,24 @@ export default function GasExpense() {
     }
   }
 
+  function openExistingModal() {
+    setExistingPrice(String(data.default_price));
+    setExistingDate(new Date().toISOString().slice(0, 10));
+    setExistingModalOpen(true);
+  }
+
+  async function handleAddExisting(e) {
+    e.preventDefault();
+    try {
+      await api.post('/api/gas/add_existing', { price: Number(existingPrice), installed_date: existingDate });
+      showFlash('Cylinder added!');
+      setExistingModalOpen(false);
+      load();
+    } catch (err) {
+      showFlash(err.message, 'danger');
+    }
+  }
+
   function openCodeModal() {
     setCode(pending_order?.delivery_code || '');
     setCodeModalOpen(true);
@@ -137,6 +158,7 @@ export default function GasExpense() {
           canBook={canBook}
           onBookClick={() => setBookModalOpen(true)}
           onCodeClick={openCodeModal}
+          onExistingClick={openExistingModal}
         />
       ) : (
         <AlarmingTab
@@ -151,6 +173,7 @@ export default function GasExpense() {
           onInstall={handleInstall}
           onBookClick={() => setBookModalOpen(true)}
           onCodeClick={openCodeModal}
+          onExistingClick={openExistingModal}
         />
       )}
 
@@ -223,11 +246,39 @@ export default function GasExpense() {
           </div>
         </div>
       )}
+
+      {/* Already Have One Installed Modal */}
+      {existingModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
+          <div className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-xl p-6 transform transition-all animate-bounce-up shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold text-gray-800">I Already Have One Installed</h3>
+              <button onClick={() => setExistingModalOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleAddExisting}>
+              <div className="mb-4">
+                <label className="block text-gray-600 text-sm font-medium mb-2">Cylinder Price (₹)</label>
+                <input type="number" min={1} value={existingPrice} onChange={(e) => setExistingPrice(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
+              </div>
+              <div className="mb-6">
+                <label className="block text-gray-600 text-sm font-medium mb-2">Installed On</label>
+                <input type="date" max={new Date().toISOString().slice(0, 10)} value={existingDate} onChange={(e) => setExistingDate(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
+                <p className="text-xs text-slate-400 mt-2">Whenever this cylinder was actually connected — the ~40-day check-in clock starts counting from this date.</p>
+              </div>
+              <button type="submit" className="w-full py-3.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center">
+                <Check className="w-5 h-5 mr-2" /> Add Cylinder
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }
 
-function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUntilRebook, daysSinceInstalled, isCheckDue, canBook, onBookClick, onCodeClick }) {
+function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUntilRebook, daysSinceInstalled, isCheckDue, canBook, onBookClick, onCodeClick, onExistingClick }) {
   return (
     <>
       {/* Stats Row */}
@@ -260,13 +311,18 @@ function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUn
               <span className="text-[10px] text-slate-400 mt-1">₹{stored.price} • delivered {stored.received_date}</span>
             </div>
           ) : (
-            <button type="button" onClick={onBookClick} className="glass-card p-5 flex flex-col justify-center items-center text-center relative overflow-hidden cursor-pointer group w-full">
-              <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                <Flame className="w-6 h-6" />
-              </div>
-              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Current Cylinder</p>
-              <span className="text-slate-500 font-bold text-lg">Book First Cylinder</span>
-            </button>
+            <div className="glass-card p-5 flex flex-col justify-center items-center text-center relative overflow-hidden">
+              <button type="button" onClick={onBookClick} className="flex flex-col items-center cursor-pointer group w-full">
+                <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                  <Flame className="w-6 h-6" />
+                </div>
+                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Current Cylinder</p>
+                <span className="text-slate-500 font-bold text-lg">Book First Cylinder</span>
+              </button>
+              <button type="button" onClick={onExistingClick} className="text-[10px] text-indigo-500 hover:text-indigo-600 underline mt-2">
+                Already have one installed?
+              </button>
+            </div>
           )}
 
           <div className="glass-card p-5 flex flex-col justify-center items-center text-center relative overflow-hidden group sm:col-span-2 md:col-span-1">
@@ -377,16 +433,21 @@ function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUn
   );
 }
 
-function AlarmingTab({ active, pendingOrder, stored, stage, daysSinceInstalled, canBook, onSnooze, onMarkDelivered, onInstall, onBookClick, onCodeClick }) {
+function AlarmingTab({ active, pendingOrder, stored, stage, daysSinceInstalled, canBook, onSnooze, onMarkDelivered, onInstall, onBookClick, onCodeClick, onExistingClick }) {
   return (
     <>
       {stage === 'none' && (
         <div className="glass-card p-8 text-center">
           <Flame className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500 mb-4">No cylinder booked yet — book one first.</p>
-          <button onClick={onBookClick} className="bg-rose-600 hover:bg-rose-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
-            Book First Cylinder
-          </button>
+          <p className="text-slate-500 mb-4">No cylinder tracked yet.</p>
+          <div className="flex flex-col items-center gap-3">
+            <button onClick={onBookClick} className="bg-rose-600 hover:bg-rose-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
+              Book First Cylinder
+            </button>
+            <button onClick={onExistingClick} className="text-xs text-indigo-500 hover:text-indigo-600 underline">
+              Already have one installed?
+            </button>
+          </div>
         </div>
       )}
 
