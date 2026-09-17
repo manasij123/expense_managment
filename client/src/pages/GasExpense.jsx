@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Flame, Banknote, CalendarClock, List, X, Check, HelpCircle, AlarmClock, PackageCheck, Receipt, KeyRound } from 'lucide-react';
+import { ArrowLeft, Flame, Banknote, CalendarClock, List, X, Check, HelpCircle, AlarmClock, PackageCheck, Receipt, KeyRound, Archive, AlertTriangle } from 'lucide-react';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import Layout from '../components/Layout';
 import { api } from '../api';
@@ -10,19 +10,18 @@ import { useFlash } from '../context/FlashContext';
 // can't do this. No-op on the website.
 const AlarmSettings = registerPlugin('AlarmSettings');
 
-// Which step of the acknowledge -> book -> received flow the cylinder is
-// currently in, driving what the Alarming tab shows. A pending order (one
-// that's been booked to replace the cylinder still in use) always takes
-// priority — asking "has it run out?" about the old one is pointless once
-// a replacement is already on the way.
-function gasStage(active, pendingOrder, isCheckDue) {
+// A cylinder's life has four stages: booked with the distributor
+// ('ordered'), delivered and sitting at home as a full spare but not
+// connected ('stored'), actually connected and in use ('active'), and
+// used up ('finished'). This picks which stage the Alarming tab should be
+// showing right now, in priority order:
+function gasStage(active, pendingOrder, stored, isCheckDue) {
   if (pendingOrder) return 'awaiting_delivery';
-  // The very first cylinder ever booked has no old one to keep running, so
-  // it goes straight to 'active' but still starts out unreceived.
-  if (active && !active.received) return 'awaiting_delivery';
+  // Nothing connected right now, but a spare is sitting in storage —
+  // connect it immediately, there's no "is it due yet" question.
+  if (!active && stored) return 'install_now';
   if (!active) return 'none';
-  if (isCheckDue && !active.acknowledged) return 'check_due';
-  if (isCheckDue && active.acknowledged) return 'ready_to_book';
+  if (isCheckDue) return stored ? 'ready_to_install' : 'no_spare_due';
   return 'ok';
 }
 
@@ -52,8 +51,9 @@ export default function GasExpense() {
     );
   }
 
-  const { active, pending_order, is_check_due, history, total_expense, days_until_rebook } = data;
-  const stage = gasStage(active, pending_order, is_check_due);
+  const { active, pending_order, stored, is_check_due, history, total_expense, days_until_rebook } = data;
+  const stage = gasStage(active, pending_order, stored, is_check_due);
+  const canBook = !pending_order && !stored;
 
   async function handleSnooze() {
     try {
@@ -65,20 +65,20 @@ export default function GasExpense() {
     }
   }
 
-  async function handleAcknowledge() {
+  async function handleMarkDelivered() {
     try {
-      await api.post('/api/gas/acknowledge');
-      showFlash("Noted — don't forget to book it!");
+      await api.post('/api/gas/mark_delivered');
+      showFlash('Marked as delivered — stored as your spare!');
       load();
     } catch (err) {
       showFlash(err.message, 'danger');
     }
   }
 
-  async function handleMarkReceived() {
+  async function handleInstall() {
     try {
-      await api.post('/api/gas/mark_received');
-      showFlash('Marked as received!');
+      await api.post('/api/gas/install');
+      showFlash('Spare cylinder installed!');
       load();
     } catch (err) {
       showFlash(err.message, 'danger');
@@ -89,7 +89,7 @@ export default function GasExpense() {
     e.preventDefault();
     try {
       await api.post('/api/gas/book', { price: Number(price) });
-      showFlash(active ? 'New cylinder booked! Mark it received once it actually arrives.' : 'Cylinder booked!');
+      showFlash('Cylinder booked! Mark it delivered once it actually arrives.');
       setBookModalOpen(false);
       load();
     } catch (err) {
@@ -98,7 +98,7 @@ export default function GasExpense() {
   }
 
   function openCodeModal() {
-    setCode((pending_order || active)?.delivery_code || '');
+    setCode(pending_order?.delivery_code || '');
     setCodeModalOpen(true);
   }
 
@@ -114,8 +114,8 @@ export default function GasExpense() {
     }
   }
 
-  const daysSinceBooked = active
-    ? Math.floor((new Date() - new Date(active.received_date || active.booked_date)) / (1000 * 60 * 60 * 24))
+  const daysSinceInstalled = active
+    ? Math.floor((new Date() - new Date(active.installed_date)) / (1000 * 60 * 60 * 24))
     : null;
 
   return (
@@ -124,11 +124,13 @@ export default function GasExpense() {
         <RecordTab
           active={active}
           pendingOrder={pending_order}
+          stored={stored}
           history={history}
           totalExpense={total_expense}
           daysUntilRebook={days_until_rebook}
-          daysSinceBooked={daysSinceBooked}
+          daysSinceInstalled={daysSinceInstalled}
           isCheckDue={is_check_due}
+          canBook={canBook}
           onBookClick={() => setBookModalOpen(true)}
           onCodeClick={openCodeModal}
         />
@@ -136,11 +138,13 @@ export default function GasExpense() {
         <AlarmingTab
           active={active}
           pendingOrder={pending_order}
+          stored={stored}
           stage={stage}
-          daysSinceBooked={daysSinceBooked}
+          daysSinceInstalled={daysSinceInstalled}
+          canBook={canBook}
           onSnooze={handleSnooze}
-          onAcknowledge={handleAcknowledge}
-          onMarkReceived={handleMarkReceived}
+          onMarkDelivered={handleMarkDelivered}
+          onInstall={handleInstall}
           onBookClick={() => setBookModalOpen(true)}
           onCodeClick={openCodeModal}
         />
@@ -161,7 +165,7 @@ export default function GasExpense() {
         >
           <AlarmClock className="w-5 h-5" />
           Alarming
-          {(stage === 'check_due' || stage === 'ready_to_book' || stage === 'awaiting_delivery') && (
+          {stage !== 'none' && stage !== 'ok' && (
             <span className="absolute top-1 right-[30%] w-2 h-2 rounded-full bg-rose-500"></span>
           )}
         </button>
@@ -219,7 +223,7 @@ export default function GasExpense() {
   );
 }
 
-function RecordTab({ active, pendingOrder, history, totalExpense, daysUntilRebook, daysSinceBooked, isCheckDue, onBookClick, onCodeClick }) {
+function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUntilRebook, daysSinceInstalled, isCheckDue, canBook, onBookClick, onCodeClick }) {
   return (
     <>
       {/* Stats Row */}
@@ -239,14 +243,17 @@ function RecordTab({ active, pendingOrder, history, totalExpense, daysUntilReboo
                 <Flame className="w-6 h-6" />
               </div>
               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Current Cylinder</p>
-              <span className="text-emerald-600 font-bold text-lg">Day {daysSinceBooked}</span>
-              <span className="text-[10px] text-slate-400 mt-1">₹{active.price} • {active.received ? 'received' : 'booked'} {active.received_date || active.booked_date}</span>
-              {!pendingOrder && (
-                <button onClick={onCodeClick} className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-600 hover:bg-rose-100 transition">
-                  <KeyRound className="w-3.5 h-3.5" />
-                  {active.delivery_code ? `Code: ${active.delivery_code}` : 'Add Delivery Code'}
-                </button>
-              )}
+              <span className="text-emerald-600 font-bold text-lg">Day {daysSinceInstalled}</span>
+              <span className="text-[10px] text-slate-400 mt-1">₹{active.price} • installed {active.installed_date}</span>
+            </div>
+          ) : stored ? (
+            <div className="glass-card p-5 flex flex-col justify-center items-center text-center relative overflow-hidden">
+              <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-500 flex items-center justify-center mb-2">
+                <Archive className="w-6 h-6" />
+              </div>
+              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Current Cylinder</p>
+              <span className="text-indigo-600 font-bold text-lg">Spare not connected</span>
+              <span className="text-[10px] text-slate-400 mt-1">₹{stored.price} • delivered {stored.received_date}</span>
             </div>
           ) : (
             <button type="button" onClick={onBookClick} className="glass-card p-5 flex flex-col justify-center items-center text-center relative overflow-hidden cursor-pointer group w-full">
@@ -272,7 +279,7 @@ function RecordTab({ active, pendingOrder, history, totalExpense, daysUntilReboo
         <div className="glass-card p-4 mb-8 flex items-center justify-between gap-3 border-2 border-indigo-200 bg-indigo-50/60">
           <div>
             <p className="text-sm font-semibold text-slate-700">New cylinder booked on {pendingOrder.booked_date} for ₹{pendingOrder.price} — waiting for delivery.</p>
-            <p className="text-xs text-slate-500 mt-0.5">The one currently in use above keeps running until this one is marked received.</p>
+            <p className="text-xs text-slate-500 mt-0.5">Becomes your spare once delivered; whatever's in use keeps running untouched.</p>
           </div>
           <button onClick={onCodeClick} className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-indigo-600 hover:bg-indigo-100 transition">
             <KeyRound className="w-3.5 h-3.5" />
@@ -281,19 +288,26 @@ function RecordTab({ active, pendingOrder, history, totalExpense, daysUntilReboo
         </div>
       )}
 
-      {active && active.received && !isCheckDue && (
+      {stored && active && (
+        <div className="glass-card p-4 mb-8 flex items-center gap-3 border-2 border-indigo-100 bg-indigo-50/40">
+          <Archive className="w-5 h-5 text-indigo-400 flex-shrink-0" />
+          <p className="text-sm text-slate-600">Spare in stock — delivered {stored.received_date} for ₹{stored.price}. Ready to install once the current one runs out.</p>
+        </div>
+      )}
+
+      {active && !isCheckDue && (
         <div className="glass-card p-4 mb-8 flex items-center gap-3">
           <CalendarClock className="w-5 h-5 text-slate-400 flex-shrink-0" />
           <p className="text-sm text-slate-500">Next check-in around <span className="font-semibold text-slate-700">{active.next_check_date}</span>.</p>
         </div>
       )}
 
-      {active && !pendingOrder && (
+      {canBook && active && (
         <div className="flex justify-end items-center gap-3 mb-6">
           {daysUntilRebook > 0 ? (
             <span className="text-xs text-slate-400">Distributor rule: new booking available in {daysUntilRebook} day{daysUntilRebook > 1 ? 's' : ''}</span>
           ) : (
-            <button onClick={onBookClick} className="glass-btn-secondary px-5 py-3 rounded-xl font-semibold text-sm" title="Manually book a new cylinder">
+            <button onClick={onBookClick} className="glass-btn-secondary px-5 py-3 rounded-xl font-semibold text-sm" title="Book the next spare cylinder">
               Book New Cylinder
             </button>
           )}
@@ -312,6 +326,7 @@ function RecordTab({ active, pendingOrder, history, totalExpense, daysUntilReboo
             <thead>
               <tr className="text-xs text-slate-400 uppercase border-b border-slate-200/50">
                 <th className="px-6 py-3 font-semibold text-center">Booked On</th>
+                <th className="px-6 py-3 font-semibold text-center">Delivered On</th>
                 <th className="px-6 py-3 font-semibold text-center">Installed On</th>
                 <th className="px-6 py-3 font-semibold text-center">Price</th>
                 <th className="px-6 py-3 font-semibold text-center">Status</th>
@@ -322,19 +337,20 @@ function RecordTab({ active, pendingOrder, history, totalExpense, daysUntilReboo
             <tbody className="text-sm divide-y divide-slate-100 sm:divide-y-0">
               {history.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-slate-400">No cylinders booked yet.</td>
+                  <td colSpan={7} className="px-6 py-8 text-center text-slate-400">No cylinders booked yet.</td>
                 </tr>
               )}
               {history.map((c) => (
                 <tr key={c.id} className="border-b border-slate-100/50 last:border-none hover:bg-white/40 transition">
                   <td className="px-6 py-4 font-medium text-slate-700 text-center">{c.booked_date}</td>
-                  <td data-label="Installed On" className="px-6 py-4 text-center text-slate-500">
-                    {c.received_date || (c.received ? c.booked_date : '-')}
-                  </td>
+                  <td data-label="Delivered On" className="px-6 py-4 text-center text-slate-500">{c.received_date || '-'}</td>
+                  <td data-label="Installed On" className="px-6 py-4 text-center text-slate-500">{c.installed_date || '-'}</td>
                   <td data-label="Price" className="px-6 py-4 text-center">₹{c.price}</td>
                   <td data-label="Status" className="px-6 py-4 text-center">
                     {c.status === 'active' ? (
                       <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-600">Active</span>
+                    ) : c.status === 'stored' ? (
+                      <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-violet-50 text-violet-600">Stored</span>
                     ) : c.status === 'ordered' ? (
                       <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-indigo-50 text-indigo-600">Ordered</span>
                     ) : (
@@ -357,12 +373,7 @@ function RecordTab({ active, pendingOrder, history, totalExpense, daysUntilReboo
   );
 }
 
-function AlarmingTab({ active, pendingOrder, stage, daysSinceBooked, onSnooze, onAcknowledge, onMarkReceived, onBookClick, onCodeClick }) {
-  // Whichever cylinder hasn't been received yet — the pending order, or
-  // (for the very first cylinder, which has no old one to wait on) active
-  // itself while it's still unreceived.
-  const incoming = pendingOrder || active;
-
+function AlarmingTab({ active, pendingOrder, stored, stage, daysSinceInstalled, canBook, onSnooze, onMarkDelivered, onInstall, onBookClick, onCodeClick }) {
   return (
     <>
       {stage === 'none' && (
@@ -384,16 +395,16 @@ function AlarmingTab({ active, pendingOrder, stage, daysSinceBooked, onSnooze, o
             <div className="flex-1">
               <h3 className="font-bold text-slate-800 mb-1">Has the new cylinder arrived?</h3>
               <p className="text-sm text-slate-500 mb-4">
-                Booked on {incoming.booked_date} — usually arrives within 5 days (longer during a supply crisis).
-                {pendingOrder && ' The one currently in use keeps running until you mark this received.'}
+                Booked on {pendingOrder.booked_date} — usually arrives within 5 days (longer during a supply crisis).
+                {active && ' The one currently in use keeps running until you install this later.'}
               </p>
               <div className="flex flex-wrap gap-3">
-                <button onClick={onMarkReceived} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
-                  Yes, Received It
+                <button onClick={onMarkDelivered} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
+                  Yes, Delivered It
                 </button>
                 <button onClick={onCodeClick} className="glass-btn-secondary px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-1.5">
                   <KeyRound className="w-4 h-4" />
-                  {incoming.delivery_code ? `Code: ${incoming.delivery_code}` : 'Add SMS Code'}
+                  {pendingOrder.delivery_code ? `Code: ${pendingOrder.delivery_code}` : 'Add SMS Code'}
                 </button>
               </div>
             </div>
@@ -401,7 +412,24 @@ function AlarmingTab({ active, pendingOrder, stage, daysSinceBooked, onSnooze, o
         </div>
       )}
 
-      {stage === 'check_due' && (
+      {stage === 'install_now' && (
+        <div className="glass-card p-6 border-2 border-indigo-300 bg-indigo-50/60">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center flex-shrink-0">
+              <Archive className="w-7 h-7" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-slate-800 mb-1">Spare cylinder in stock, nothing connected</h3>
+              <p className="text-sm text-slate-500 mb-4">Delivered {stored.received_date} for ₹{stored.price} — connect it now to start using it.</p>
+              <button onClick={onInstall} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
+                Connect It Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {stage === 'ready_to_install' && (
         <div className="glass-card p-6 border-2 border-amber-300 bg-amber-50/60">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">
@@ -409,13 +437,13 @@ function AlarmingTab({ active, pendingOrder, stage, daysSinceBooked, onSnooze, o
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-slate-800 mb-1">Has this month's gas cylinder run out?</h3>
-              <p className="text-sm text-slate-500 mb-4">Received on {active.received_date || active.booked_date} — it's been {daysSinceBooked} days.</p>
+              <p className="text-sm text-slate-500 mb-4">Installed on {active.installed_date} — it's been {daysSinceInstalled} days. A spare is in stock, ready to swap in.</p>
               <div className="flex flex-wrap gap-3">
                 <button onClick={onSnooze} className="glass-btn-secondary px-5 py-2.5 rounded-xl font-semibold text-sm">
                   Not Yet
                 </button>
-                <button onClick={onAcknowledge} className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
-                  Yes, I've Noticed — I'll Book
+                <button onClick={onInstall} className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
+                  Yes, Install the Spare
                 </button>
               </div>
             </div>
@@ -423,18 +451,23 @@ function AlarmingTab({ active, pendingOrder, stage, daysSinceBooked, onSnooze, o
         </div>
       )}
 
-      {stage === 'ready_to_book' && (
+      {stage === 'no_spare_due' && (
         <div className="glass-card p-6 border-2 border-rose-300 bg-rose-50/60">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center flex-shrink-0">
-              <Flame className="w-7 h-7" />
+              <AlertTriangle className="w-7 h-7" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-slate-800 mb-1">Don't forget to book!</h3>
-              <p className="text-sm text-slate-500 mb-4">You said you'd book a new cylinder — the alarm will keep reminding you daily until you do.</p>
-              <button onClick={onBookClick} className="bg-rose-600 hover:bg-rose-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
-                Yes, I've Booked
-              </button>
+              <h3 className="font-bold text-slate-800 mb-1">This one may be running out — and you have no spare!</h3>
+              <p className="text-sm text-slate-500 mb-4">Installed on {active.installed_date} — it's been {daysSinceInstalled} days. There's no spare in stock, so book one now before it actually runs out.</p>
+              <div className="flex flex-wrap gap-3">
+                <button onClick={onSnooze} className="glass-btn-secondary px-5 py-2.5 rounded-xl font-semibold text-sm">
+                  Not Yet
+                </button>
+                <button onClick={onBookClick} className="bg-rose-600 hover:bg-rose-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
+                  Book Now
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -445,9 +478,14 @@ function AlarmingTab({ active, pendingOrder, stage, daysSinceBooked, onSnooze, o
           <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0">
             <Check className="w-7 h-7" />
           </div>
-          <div>
+          <div className="flex-1">
             <h3 className="font-bold text-slate-800">All set</h3>
-            <p className="text-sm text-slate-500">Cylinder received, day {daysSinceBooked}. Next check-in around <span className="font-semibold text-slate-700">{active.next_check_date}</span>.</p>
+            <p className="text-sm text-slate-500">Day {daysSinceInstalled} on the current cylinder. Next check-in around <span className="font-semibold text-slate-700">{active.next_check_date}</span>.</p>
+            {stored ? (
+              <p className="text-xs text-emerald-600 mt-1">Spare already in stock — nothing to do.</p>
+            ) : canBook ? (
+              <p className="text-xs text-slate-400 mt-1">No spare booked yet — <button onClick={onBookClick} className="underline hover:text-slate-600">book one anytime</button> before this runs out.</p>
+            ) : null}
           </div>
         </div>
       )}
