@@ -10,11 +10,16 @@ export default function GasExpense() {
   const [data, setData] = useState(null);
   const [bookModalOpen, setBookModalOpen] = useState(false);
   const [price, setPrice] = useState('');
+  const [bookingCode, setBookingCode] = useState('');
+  const [orderCode, setOrderCode] = useState('');
+  const [orderDate, setOrderDate] = useState('');
 
   function load() {
     api.get('/api/gas').then((res) => {
       setData(res);
       setPrice(String(res.default_price));
+      setOrderCode(res.pending_order?.booking_code || '');
+      setOrderDate(res.pending_order?.expected_delivery_date || '');
     }).catch((err) => showFlash(err.message, 'danger'));
   }
 
@@ -43,9 +48,21 @@ export default function GasExpense() {
   async function handleBook(e) {
     e.preventDefault();
     try {
-      await api.post('/api/gas/book', { price: Number(price) });
-      showFlash(active ? 'New cylinder booked! Mark it installed once it arrives.' : 'Cylinder booked!');
+      await api.post('/api/gas/book', { price: Number(price), booking_code: bookingCode });
+      showFlash('Cylinder booked! Mark it installed once it actually arrives.');
       setBookModalOpen(false);
+      setBookingCode('');
+      load();
+    } catch (err) {
+      showFlash(err.message, 'danger');
+    }
+  }
+
+  async function handleUpdateOrder(e) {
+    e.preventDefault();
+    try {
+      await api.post('/api/gas/update_order', { booking_code: orderCode, expected_delivery_date: orderDate });
+      showFlash('Order details saved.');
       load();
     } catch (err) {
       showFlash(err.message, 'danger');
@@ -103,7 +120,46 @@ export default function GasExpense() {
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-slate-800 mb-1">New cylinder booked — waiting for delivery</h3>
-              <p className="text-sm text-slate-500 mb-4">Booked on {pending_order.booked_date} for ₹{pending_order.price}. Once the delivery person actually swaps it in, mark it installed — that's when the next ~40-day check-in clock starts.</p>
+              <p className="text-sm text-slate-500 mb-4">
+                Booked on {pending_order.booked_date} for ₹{pending_order.price}
+                {pending_order.expected_delivery_date ? `. Expected around ${pending_order.expected_delivery_date}` : ''}.
+                {' '}Once the delivery person actually swaps it in, mark it installed — that's when the next ~40-day check-in clock starts.
+              </p>
+
+              {pending_order.booking_code && (
+                <div className="mb-4 inline-flex items-center gap-3 bg-white/70 border border-sky-200 rounded-xl px-4 py-2">
+                  <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Tell the delivery person</span>
+                  <span className="text-2xl font-mono font-extrabold tracking-widest text-sky-700">{pending_order.booking_code}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleUpdateOrder} className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="block text-slate-500 text-xs font-medium mb-1">Booking Code (4-digit)</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={orderCode}
+                    onChange={(e) => setOrderCode(e.target.value.replace(/\D/g, ''))}
+                    placeholder="1234"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-500 text-xs font-medium mb-1">Expected Delivery Date</label>
+                  <input
+                    type="date"
+                    value={orderDate}
+                    onChange={(e) => setOrderDate(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <button type="submit" className="glass-btn-secondary px-4 py-2 rounded-lg text-xs font-semibold">Save Code / Date</button>
+                </div>
+              </form>
+
               <button onClick={handleInstall} className="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
                 Mark as Installed
               </button>
@@ -228,10 +284,15 @@ export default function GasExpense() {
               </button>
             </div>
             <form onSubmit={handleBook}>
-              <div className="mb-6">
+              <div className="mb-4">
                 <label className="block text-gray-600 text-sm font-medium mb-2">Cylinder Price (₹)</label>
                 <input type="number" min={1} value={price} onChange={(e) => setPrice(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500" required />
                 <p className="text-xs text-slate-400 mt-2">Price changes now and then — update it if today's price is different.</p>
+              </div>
+              <div className="mb-6">
+                <label className="block text-gray-600 text-sm font-medium mb-2">Booking Code (4-digit, if you have it)</label>
+                <input type="text" inputMode="numeric" maxLength={4} value={bookingCode} onChange={(e) => setBookingCode(e.target.value.replace(/\D/g, ''))} placeholder="1234" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500" />
+                <p className="text-xs text-slate-400 mt-2">The distributor often sends this after booking — you can also add it later.</p>
               </div>
               <button type="submit" className="w-full py-3.5 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition flex items-center justify-center">
                 <Check className="w-5 h-5 mr-2" /> Confirm Booking

@@ -602,6 +602,17 @@ def api_gas_book():
     if price <= 0:
         return jsonify({'status': 'error', 'message': 'Price must be greater than 0.'}), 400
 
+    booking_code = (data.get('booking_code') or '').strip() or None
+    if booking_code and (not booking_code.isdigit() or len(booking_code) != 4):
+        return jsonify({'status': 'error', 'message': 'Booking code must be exactly 4 digits.'}), 400
+
+    expected_delivery_date = (data.get('expected_delivery_date') or '').strip() or None
+    if expected_delivery_date:
+        try:
+            core.datetime.strptime(expected_delivery_date, '%Y-%m-%d')
+        except ValueError:
+            return jsonify({'status': 'error', 'message': 'Invalid expected delivery date.'}), 400
+
     pending_order, _ = core.get_pending_gas_order(current_user.id)
     if pending_order:
         return jsonify({'status': 'error', 'message': 'A cylinder is already booked and waiting to be marked as installed.'}), 400
@@ -619,7 +630,29 @@ def api_gas_book():
                 'message': f"Distributor rule: a new cylinder can only be booked {core.GAS_MIN_REBOOK_DAYS}+ days after the last one — {remaining} day(s) left.",
             }), 400
 
-    core.book_gas_cylinder(current_user.id, price)
+    core.book_gas_cylinder(current_user.id, price, booking_code, expected_delivery_date)
+    return jsonify({'status': 'success'})
+
+
+@api_bp.route('/gas/update_order', methods=['POST'])
+@login_required
+def api_gas_update_order():
+    data = request.get_json(silent=True) or {}
+
+    booking_code = (data.get('booking_code') or '').strip() or None
+    if booking_code and (not booking_code.isdigit() or len(booking_code) != 4):
+        return jsonify({'status': 'error', 'message': 'Booking code must be exactly 4 digits.'}), 400
+
+    expected_delivery_date = (data.get('expected_delivery_date') or '').strip() or None
+    if expected_delivery_date:
+        try:
+            core.datetime.strptime(expected_delivery_date, '%Y-%m-%d')
+        except ValueError:
+            return jsonify({'status': 'error', 'message': 'Invalid expected delivery date.'}), 400
+
+    updated = core.update_pending_gas_order(current_user.id, booking_code, expected_delivery_date)
+    if updated is None:
+        return jsonify({'status': 'error', 'message': 'No booked cylinder waiting to be installed.'}), 400
     return jsonify({'status': 'success'})
 
 
