@@ -547,16 +547,14 @@ def api_newspaper_history():
 @login_required
 def api_gas():
     active, _ = core.get_active_gas_cylinder(current_user.id)
-    pending_order, _ = core.get_pending_gas_order(current_user.id)
     today_str = core.get_ist_now().strftime('%Y-%m-%d')
-    is_check_due = bool(active and active.get('next_check_date', '9999-99-99') <= today_str)
+    is_check_due = bool(active and active.get('received') and (active.get('next_check_date') or '9999-99-99') <= today_str)
 
     days_until_rebook = 0
-    if active and not pending_order:
-        reference_date = active.get('installed_date') or active['booked_date']
+    if active:
         today_dt = core.datetime.strptime(today_str, '%Y-%m-%d')
-        ref_dt = core.datetime.strptime(reference_date, '%Y-%m-%d')
-        days_since = (today_dt - ref_dt).days
+        booked_dt = core.datetime.strptime(active['booked_date'], '%Y-%m-%d')
+        days_since = (today_dt - booked_dt).days
         days_until_rebook = max(0, core.GAS_MIN_REBOOK_DAYS - days_since)
 
     docs = core.db.collection('users').document(current_user.id).collection('gas_cylinders') \
@@ -567,12 +565,9 @@ def api_gas():
         d = doc.to_dict()
         d['id'] = doc.id
         d['days_lasted'] = None
-        # "Lasted" counts from when the cylinder actually went into use, not
-        # from when it was booked — those can be days apart.
-        start_date = d.get('installed_date') or d.get('booked_date')
-        if d.get('status') == 'finished' and d.get('finished_date') and start_date:
+        if d.get('status') == 'finished' and d.get('finished_date') and d.get('booked_date'):
             try:
-                b = core.datetime.strptime(start_date, '%Y-%m-%d')
+                b = core.datetime.strptime(d['booked_date'], '%Y-%m-%d')
                 f = core.datetime.strptime(d['finished_date'], '%Y-%m-%d')
                 d['days_lasted'] = (f - b).days
             except ValueError:
@@ -582,7 +577,6 @@ def api_gas():
 
     return jsonify({
         'active': active,
-        'pending_order': pending_order,
         'is_check_due': is_check_due,
         'days_until_rebook': days_until_rebook,
         'history': history,
@@ -602,27 +596,11 @@ def api_gas_book():
     if price <= 0:
         return jsonify({'status': 'error', 'message': 'Price must be greater than 0.'}), 400
 
-    booking_code = (data.get('booking_code') or '').strip() or None
-    if booking_code and (not booking_code.isdigit() or len(booking_code) != 4):
-        return jsonify({'status': 'error', 'message': 'Booking code must be exactly 4 digits.'}), 400
-
-    expected_delivery_date = (data.get('expected_delivery_date') or '').strip() or None
-    if expected_delivery_date:
-        try:
-            core.datetime.strptime(expected_delivery_date, '%Y-%m-%d')
-        except ValueError:
-            return jsonify({'status': 'error', 'message': 'Invalid expected delivery date.'}), 400
-
-    pending_order, _ = core.get_pending_gas_order(current_user.id)
-    if pending_order:
-        return jsonify({'status': 'error', 'message': 'A cylinder is already booked and waiting to be marked as installed.'}), 400
-
     active, _ = core.get_active_gas_cylinder(current_user.id)
     if active:
-        reference_date = active.get('installed_date') or active['booked_date']
         today_dt = core.datetime.strptime(core.get_ist_now().strftime('%Y-%m-%d'), '%Y-%m-%d')
-        ref_dt = core.datetime.strptime(reference_date, '%Y-%m-%d')
-        days_since = (today_dt - ref_dt).days
+        booked_dt = core.datetime.strptime(active['booked_date'], '%Y-%m-%d')
+        days_since = (today_dt - booked_dt).days
         if days_since < core.GAS_MIN_REBOOK_DAYS:
             remaining = core.GAS_MIN_REBOOK_DAYS - days_since
             return jsonify({
@@ -630,39 +608,8 @@ def api_gas_book():
                 'message': f"Distributor rule: a new cylinder can only be booked {core.GAS_MIN_REBOOK_DAYS}+ days after the last one — {remaining} day(s) left.",
             }), 400
 
-    core.book_gas_cylinder(current_user.id, price, booking_code, expected_delivery_date)
+    core.book_gas_cylinder(current_user.id, price)
     return jsonify({'status': 'success'})
-
-
-@api_bp.route('/gas/update_order', methods=['POST'])
-@login_required
-def api_gas_update_order():
-    data = request.get_json(silent=True) or {}
-
-    booking_code = (data.get('booking_code') or '').strip() or None
-    if booking_code and (not booking_code.isdigit() or len(booking_code) != 4):
-        return jsonify({'status': 'error', 'message': 'Booking code must be exactly 4 digits.'}), 400
-
-    expected_delivery_date = (data.get('expected_delivery_date') or '').strip() or None
-    if expected_delivery_date:
-        try:
-            core.datetime.strptime(expected_delivery_date, '%Y-%m-%d')
-        except ValueError:
-            return jsonify({'status': 'error', 'message': 'Invalid expected delivery date.'}), 400
-
-    updated = core.update_pending_gas_order(current_user.id, booking_code, expected_delivery_date)
-    if updated is None:
-        return jsonify({'status': 'error', 'message': 'No booked cylinder waiting to be installed.'}), 400
-    return jsonify({'status': 'success'})
-
-
-@api_bp.route('/gas/install', methods=['POST'])
-@login_required
-def api_gas_install():
-    installed_date = core.install_gas_cylinder(current_user.id)
-    if installed_date is None:
-        return jsonify({'status': 'error', 'message': 'No booked cylinder waiting to be installed.'}), 400
-    return jsonify({'status': 'success', 'installed_date': installed_date})
 
 
 @api_bp.route('/gas/snooze', methods=['POST'])
@@ -672,6 +619,37 @@ def api_gas_snooze():
     if next_check is None:
         return jsonify({'status': 'error', 'message': 'No active cylinder to check in on.'}), 400
     return jsonify({'status': 'success', 'next_check_date': next_check})
+
+
+@api_bp.route('/gas/acknowledge', methods=['POST'])
+@login_required
+def api_gas_acknowledge():
+    ok = core.acknowledge_gas_checkin(current_user.id)
+    if not ok:
+        return jsonify({'status': 'error', 'message': 'No active cylinder to acknowledge.'}), 400
+    return jsonify({'status': 'success'})
+
+
+@api_bp.route('/gas/mark_received', methods=['POST'])
+@login_required
+def api_gas_mark_received():
+    ok = core.mark_gas_received(current_user.id)
+    if not ok:
+        return jsonify({'status': 'error', 'message': 'No active cylinder to mark as received.'}), 400
+    return jsonify({'status': 'success'})
+
+
+@api_bp.route('/gas/set_code', methods=['POST'])
+@login_required
+def api_gas_set_code():
+    data = request.get_json(silent=True) or {}
+    code = (data.get('code') or '').strip()
+    if not code:
+        return jsonify({'status': 'error', 'message': 'Please enter the code.'}), 400
+    ok = core.set_gas_delivery_code(current_user.id, code)
+    if not ok:
+        return jsonify({'status': 'error', 'message': 'No active cylinder to add a code to.'}), 400
+    return jsonify({'status': 'success'})
 
 
 # --- Public share view (no auth) ---

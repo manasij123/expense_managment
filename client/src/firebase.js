@@ -10,8 +10,9 @@ import {
 import { getMessaging, getToken as getFcmToken, onMessage } from 'firebase/messaging';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 
-// Native Android plugin (android/app/.../GoogleAuthPlugin.kt) — signs in
-// through Google Play Services instead of the WebView.
+// Native-only: runs the real native Google account picker (see
+// GoogleAuthPlugin.kt) instead of a WebView popup/redirect, which Google
+// blocks. No-op on the regular website.
 const GoogleAuthNative = registerPlugin('GoogleAuth');
 
 // Same project/config the server-rendered app already used (functions/templates/login.html, base.html).
@@ -32,13 +33,11 @@ export function watchAuthState(callback) {
   return onAuthStateChanged(auth, callback);
 }
 
-// Popups AND redirects are unreliable inside the Capacitor-wrapped Android
-// app's WebView — Google actively blocks its own sign-in page from loading
-// inside an embedded WebView, which is why either approach just hangs on
-// "Signing in..." forever there. The native build instead signs in through
-// Google Play Services (GoogleAuthPlugin.kt) and hands the resulting Google
-// ID token to Firebase. The regular website keeps the popup flow unchanged,
-// since that's already proven to work well there.
+// Popups (and redirects) are unreliable inside the Capacitor-wrapped Android
+// app's WebView — Google blocks sign-in in embedded WebViews outright — so
+// the native build runs the real native Google account picker instead, then
+// completes Firebase sign-in from that credential. The regular website keeps
+// the popup flow unchanged, since that's already proven to work well there.
 export async function signInWithGoogle() {
   if (Capacitor.isNativePlatform()) {
     const { idToken } = await GoogleAuthNative.signIn();

@@ -36,8 +36,7 @@
     <string name="gas_alarm_body">এই মাসের গ্যাস সিলিন্ডার কি শেষ হয়ে গেছে? অ্যাপে গিয়ে জানান।</string>
     <string name="gas_got_it">OK, I\'ll Check</string>
     <string name="gas_alarm_label">Gas Check-in</string>
-    <string name="newspaper_alarms_label">Newspaper Alarms</string>
-    <string name="alarms_dashboard_label">Alarms</string>
+    <string name="gas_alarm_title_bar">Gas Alarm</string>
     <string name="gas_check_time_label">Daily Check Time</string>
     <string name="gas_alarm_hint">Rings only when a check-in is actually due</string>
 </resources>

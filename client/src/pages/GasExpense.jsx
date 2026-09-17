@@ -1,25 +1,38 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Flame, Banknote, CalendarClock, List, X, Check, HelpCircle, Truck } from 'lucide-react';
+import { ArrowLeft, Flame, Banknote, CalendarClock, List, X, Check, HelpCircle, AlarmClock, PackageCheck, Receipt, KeyRound } from 'lucide-react';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import Layout from '../components/Layout';
 import { api } from '../api';
 import { useFlash } from '../context/FlashContext';
+
+// Native-only bridge to the reliable exact-alarm engine — a web page alone
+// can't do this. No-op on the website.
+const AlarmSettings = registerPlugin('AlarmSettings');
+
+// Which step of the acknowledge -> book -> received flow the active
+// cylinder is currently in, driving what the Alarming tab shows.
+function gasStage(active, isCheckDue) {
+  if (!active) return 'none';
+  if (!active.received) return 'awaiting_delivery';
+  if (isCheckDue && !active.acknowledged) return 'check_due';
+  if (isCheckDue && active.acknowledged) return 'ready_to_book';
+  return 'ok';
+}
 
 export default function GasExpense() {
   const showFlash = useFlash();
   const [data, setData] = useState(null);
   const [bookModalOpen, setBookModalOpen] = useState(false);
   const [price, setPrice] = useState('');
-  const [bookingCode, setBookingCode] = useState('');
-  const [orderCode, setOrderCode] = useState('');
-  const [orderDate, setOrderDate] = useState('');
+  const [tab, setTab] = useState('record'); // 'record' | 'alarming'
+  const [codeModalOpen, setCodeModalOpen] = useState(false);
+  const [code, setCode] = useState('');
 
   function load() {
     api.get('/api/gas').then((res) => {
       setData(res);
       setPrice(String(res.default_price));
-      setOrderCode(res.pending_order?.booking_code || '');
-      setOrderDate(res.pending_order?.expected_delivery_date || '');
     }).catch((err) => showFlash(err.message, 'danger'));
   }
 
@@ -33,7 +46,8 @@ export default function GasExpense() {
     );
   }
 
-  const { active, pending_order, is_check_due, history, total_expense, days_until_rebook } = data;
+  const { active, is_check_due, history, total_expense, days_until_rebook } = data;
+  const stage = gasStage(active, is_check_due);
 
   async function handleSnooze() {
     try {
@@ -45,35 +59,49 @@ export default function GasExpense() {
     }
   }
 
+  async function handleAcknowledge() {
+    try {
+      await api.post('/api/gas/acknowledge');
+      showFlash("Noted — don't forget to book it!");
+      load();
+    } catch (err) {
+      showFlash(err.message, 'danger');
+    }
+  }
+
+  async function handleMarkReceived() {
+    try {
+      await api.post('/api/gas/mark_received');
+      showFlash('Marked as received!');
+      load();
+    } catch (err) {
+      showFlash(err.message, 'danger');
+    }
+  }
+
   async function handleBook(e) {
     e.preventDefault();
     try {
-      await api.post('/api/gas/book', { price: Number(price), booking_code: bookingCode });
-      showFlash('Cylinder booked! Mark it installed once it actually arrives.');
+      await api.post('/api/gas/book', { price: Number(price) });
+      showFlash(active ? 'New cylinder booked!' : 'Cylinder booked!');
       setBookModalOpen(false);
-      setBookingCode('');
       load();
     } catch (err) {
       showFlash(err.message, 'danger');
     }
   }
 
-  async function handleUpdateOrder(e) {
+  function openCodeModal() {
+    setCode(active?.delivery_code || '');
+    setCodeModalOpen(true);
+  }
+
+  async function handleSetCode(e) {
     e.preventDefault();
     try {
-      await api.post('/api/gas/update_order', { booking_code: orderCode, expected_delivery_date: orderDate });
-      showFlash('Order details saved.');
-      load();
-    } catch (err) {
-      showFlash(err.message, 'danger');
-    }
-  }
-
-  async function handleInstall() {
-    if (!window.confirm('Has the new cylinder actually been delivered and hooked up now?')) return;
-    try {
-      await api.post('/api/gas/install');
-      showFlash('New cylinder marked as installed!');
+      await api.post('/api/gas/set_code', { code });
+      showFlash('Delivery code saved!');
+      setCodeModalOpen(false);
       load();
     } catch (err) {
       showFlash(err.message, 'danger');
@@ -81,93 +109,111 @@ export default function GasExpense() {
   }
 
   const daysSinceBooked = active
-    ? Math.floor((new Date() - new Date(active.installed_date || active.booked_date)) / (1000 * 60 * 60 * 24))
+    ? Math.floor((new Date() - new Date(active.booked_date)) / (1000 * 60 * 60 * 24))
     : null;
 
   return (
     <Layout headerContent={<HeaderTitle />}>
-      {/* Check-in Banner */}
-      {is_check_due && (
-        <div className="glass-card p-6 mb-6 border-2 border-amber-300 bg-amber-50/60">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">
-              <HelpCircle className="w-7 h-7" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-slate-800 mb-1">Has this month's gas cylinder run out?</h3>
-              <p className="text-sm text-slate-500 mb-4">Installed on {active.installed_date || active.booked_date} — it's been {daysSinceBooked} days.</p>
-              <div className="flex flex-wrap gap-3">
-                <button onClick={handleSnooze} className="glass-btn-secondary px-5 py-2.5 rounded-xl font-semibold text-sm">
-                  Not Yet
-                </button>
-                {!pending_order && (
-                  <button onClick={() => setBookModalOpen(true)} className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
-                    Yes, It's Finished — Book New
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+      {tab === 'record' ? (
+        <RecordTab
+          active={active}
+          history={history}
+          totalExpense={total_expense}
+          daysUntilRebook={days_until_rebook}
+          daysSinceBooked={daysSinceBooked}
+          isCheckDue={is_check_due}
+          onBookClick={() => setBookModalOpen(true)}
+          onCodeClick={openCodeModal}
+        />
+      ) : (
+        <AlarmingTab
+          active={active}
+          stage={stage}
+          daysSinceBooked={daysSinceBooked}
+          onSnooze={handleSnooze}
+          onAcknowledge={handleAcknowledge}
+          onMarkReceived={handleMarkReceived}
+          onBookClick={() => setBookModalOpen(true)}
+          onCodeClick={openCodeModal}
+        />
       )}
 
-      {/* Pending Order Banner */}
-      {pending_order && (
-        <div className="glass-card p-6 mb-6 border-2 border-sky-300 bg-sky-50/60">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center flex-shrink-0">
-              <Truck className="w-7 h-7" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-slate-800 mb-1">New cylinder booked — waiting for delivery</h3>
-              <p className="text-sm text-slate-500 mb-4">
-                Booked on {pending_order.booked_date} for ₹{pending_order.price}
-                {pending_order.expected_delivery_date ? `. Expected around ${pending_order.expected_delivery_date}` : ''}.
-                {' '}Once the delivery person actually swaps it in, mark it installed — that's when the next ~40-day check-in clock starts.
-              </p>
+      {/* Bottom tab bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-700 flex" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <button
+          onClick={() => setTab('record')}
+          className={`flex-1 flex flex-col items-center py-3 gap-1 text-xs font-semibold transition ${tab === 'record' ? 'text-rose-600' : 'text-slate-400'}`}
+        >
+          <Receipt className="w-5 h-5" />
+          Booking Record
+        </button>
+        <button
+          onClick={() => setTab('alarming')}
+          className={`flex-1 flex flex-col items-center py-3 gap-1 text-xs font-semibold transition relative ${tab === 'alarming' ? 'text-rose-600' : 'text-slate-400'}`}
+        >
+          <AlarmClock className="w-5 h-5" />
+          Alarming
+          {(stage === 'check_due' || stage === 'ready_to_book' || stage === 'awaiting_delivery') && (
+            <span className="absolute top-1 right-[30%] w-2 h-2 rounded-full bg-rose-500"></span>
+          )}
+        </button>
+      </div>
+      <div className="h-16" /> {/* spacer so content isn't hidden behind the fixed bar */}
 
-              {pending_order.booking_code && (
-                <div className="mb-4 inline-flex items-center gap-3 bg-white/70 border border-sky-200 rounded-xl px-4 py-2">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Tell the delivery person</span>
-                  <span className="text-2xl font-mono font-extrabold tracking-widest text-sky-700">{pending_order.booking_code}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleUpdateOrder} className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                <div>
-                  <label className="block text-slate-500 text-xs font-medium mb-1">Booking Code (4-digit)</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={4}
-                    value={orderCode}
-                    onChange={(e) => setOrderCode(e.target.value.replace(/\D/g, ''))}
-                    placeholder="1234"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-500 text-xs font-medium mb-1">Expected Delivery Date</label>
-                  <input
-                    type="date"
-                    value={orderDate}
-                    onChange={(e) => setOrderDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <button type="submit" className="glass-btn-secondary px-4 py-2 rounded-lg text-xs font-semibold">Save Code / Date</button>
-                </div>
-              </form>
-
-              <button onClick={handleInstall} className="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
-                Mark as Installed
+      {/* Book Cylinder Modal */}
+      {bookModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
+          <div className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-xl p-6 transform transition-all animate-bounce-up shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold text-gray-800">{active ? 'Book New Cylinder' : 'Book First Cylinder'}</h3>
+              <button onClick={() => setBookModalOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition">
+                <X className="w-5 h-5" />
               </button>
             </div>
+            <form onSubmit={handleBook}>
+              <div className="mb-6">
+                <label className="block text-gray-600 text-sm font-medium mb-2">Cylinder Price (₹)</label>
+                <input type="number" min={1} value={price} onChange={(e) => setPrice(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500" required />
+                <p className="text-xs text-slate-400 mt-2">Price changes now and then — update it if today's price is different.</p>
+              </div>
+              <button type="submit" className="w-full py-3.5 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition flex items-center justify-center">
+                <Check className="w-5 h-5 mr-2" /> Confirm Booking
+              </button>
+            </form>
           </div>
         </div>
       )}
 
+      {/* Delivery Code Modal */}
+      {codeModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
+          <div className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-xl p-6 transform transition-all animate-bounce-up shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold text-gray-800">Delivery Code</h3>
+              <button onClick={() => setCodeModalOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSetCode}>
+              <div className="mb-6">
+                <label className="block text-gray-600 text-sm font-medium mb-2">4-Digit SMS Code</label>
+                <input type="text" inputMode="numeric" maxLength={4} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} placeholder="0000" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 text-center text-2xl tracking-[0.5em] font-bold" required />
+                <p className="text-xs text-slate-400 mt-2">The distributor sends this by SMS after booking — give it to the delivery person to verify.</p>
+              </div>
+              <button type="submit" className="w-full py-3.5 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition flex items-center justify-center">
+                <Check className="w-5 h-5 mr-2" /> Save Code
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </Layout>
+  );
+}
+
+function RecordTab({ active, history, totalExpense, daysUntilRebook, daysSinceBooked, isCheckDue, onBookClick, onCodeClick }) {
+  return (
+    <>
       {/* Stats Row */}
       <div className="mb-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -176,7 +222,7 @@ export default function GasExpense() {
               <Banknote className="w-6 h-6" />
             </div>
             <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Total Gas Expense</p>
-            <h2 className="text-3xl font-extrabold text-slate-700 text-gradient">₹{total_expense}</h2>
+            <h2 className="text-3xl font-extrabold text-slate-700 text-gradient">₹{totalExpense}</h2>
           </div>
 
           {active ? (
@@ -186,10 +232,14 @@ export default function GasExpense() {
               </div>
               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Current Cylinder</p>
               <span className="text-emerald-600 font-bold text-lg">Day {daysSinceBooked}</span>
-              <span className="text-[10px] text-slate-400 mt-1">₹{active.price} • installed {active.installed_date || active.booked_date}</span>
+              <span className="text-[10px] text-slate-400 mt-1">₹{active.price} • booked {active.booked_date}</span>
+              <button onClick={onCodeClick} className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-600 hover:bg-rose-100 transition">
+                <KeyRound className="w-3.5 h-3.5" />
+                {active.delivery_code ? `Code: ${active.delivery_code}` : 'Add Delivery Code'}
+              </button>
             </div>
           ) : (
-            <button type="button" onClick={() => setBookModalOpen(true)} className="glass-card p-5 flex flex-col justify-center items-center text-center relative overflow-hidden cursor-pointer group w-full">
+            <button type="button" onClick={onBookClick} className="glass-card p-5 flex flex-col justify-center items-center text-center relative overflow-hidden cursor-pointer group w-full">
               <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                 <Flame className="w-6 h-6" />
               </div>
@@ -208,19 +258,19 @@ export default function GasExpense() {
         </div>
       </div>
 
-      {active && !is_check_due && (
+      {active && !isCheckDue && (
         <div className="glass-card p-4 mb-8 flex items-center gap-3">
           <CalendarClock className="w-5 h-5 text-slate-400 flex-shrink-0" />
           <p className="text-sm text-slate-500">Next check-in around <span className="font-semibold text-slate-700">{active.next_check_date}</span>.</p>
         </div>
       )}
 
-      {active && !pending_order && (
+      {active && (
         <div className="flex justify-end items-center gap-3 mb-6">
-          {days_until_rebook > 0 ? (
-            <span className="text-xs text-slate-400">Distributor rule: new booking available in {days_until_rebook} day{days_until_rebook > 1 ? 's' : ''}</span>
+          {daysUntilRebook > 0 ? (
+            <span className="text-xs text-slate-400">Distributor rule: new booking available in {daysUntilRebook} day{daysUntilRebook > 1 ? 's' : ''}</span>
           ) : (
-            <button onClick={() => setBookModalOpen(true)} className="glass-btn-secondary px-5 py-3 rounded-xl font-semibold text-sm" title="Manually book a new cylinder">
+            <button onClick={onBookClick} className="glass-btn-secondary px-5 py-3 rounded-xl font-semibold text-sm" title="Manually book a new cylinder">
               Book New Cylinder
             </button>
           )}
@@ -257,8 +307,6 @@ export default function GasExpense() {
                   <td data-label="Status" className="px-6 py-4 text-center">
                     {c.status === 'active' ? (
                       <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-600">Active</span>
-                    ) : c.status === 'ordered' ? (
-                      <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-sky-50 text-sky-600">Ordered</span>
                     ) : (
                       <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-slate-100 text-slate-500">Finished</span>
                     )}
@@ -272,36 +320,109 @@ export default function GasExpense() {
           </table>
         </div>
       </div>
+    </>
+  );
+}
 
-      {/* Book Cylinder Modal */}
-      {bookModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
-          <div className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-xl p-6 transform transition-all animate-bounce-up shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold text-gray-800">{active ? 'Book New Cylinder' : 'Book First Cylinder'}</h3>
-              <button onClick={() => setBookModalOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition">
-                <X className="w-5 h-5" />
-              </button>
+function AlarmingTab({ active, stage, daysSinceBooked, onSnooze, onAcknowledge, onMarkReceived, onBookClick, onCodeClick }) {
+  return (
+    <>
+      {stage === 'none' && (
+        <div className="glass-card p-8 text-center">
+          <Flame className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+          <p className="text-slate-500 mb-4">No cylinder booked yet — book one first.</p>
+          <button onClick={onBookClick} className="bg-rose-600 hover:bg-rose-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
+            Book First Cylinder
+          </button>
+        </div>
+      )}
+
+      {stage === 'awaiting_delivery' && (
+        <div className="glass-card p-6 border-2 border-indigo-300 bg-indigo-50/60">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center flex-shrink-0">
+              <PackageCheck className="w-7 h-7" />
             </div>
-            <form onSubmit={handleBook}>
-              <div className="mb-4">
-                <label className="block text-gray-600 text-sm font-medium mb-2">Cylinder Price (₹)</label>
-                <input type="number" min={1} value={price} onChange={(e) => setPrice(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500" required />
-                <p className="text-xs text-slate-400 mt-2">Price changes now and then — update it if today's price is different.</p>
+            <div className="flex-1">
+              <h3 className="font-bold text-slate-800 mb-1">Has the new cylinder arrived?</h3>
+              <p className="text-sm text-slate-500 mb-4">Booked on {active.booked_date} — usually arrives within 5 days (longer during a supply crisis).</p>
+              <div className="flex flex-wrap gap-3">
+                <button onClick={onMarkReceived} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
+                  Yes, Received It
+                </button>
+                <button onClick={onCodeClick} className="glass-btn-secondary px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-1.5">
+                  <KeyRound className="w-4 h-4" />
+                  {active.delivery_code ? `Code: ${active.delivery_code}` : 'Add SMS Code'}
+                </button>
               </div>
-              <div className="mb-6">
-                <label className="block text-gray-600 text-sm font-medium mb-2">Booking Code (4-digit, if you have it)</label>
-                <input type="text" inputMode="numeric" maxLength={4} value={bookingCode} onChange={(e) => setBookingCode(e.target.value.replace(/\D/g, ''))} placeholder="1234" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500" />
-                <p className="text-xs text-slate-400 mt-2">The distributor often sends this after booking — you can also add it later.</p>
-              </div>
-              <button type="submit" className="w-full py-3.5 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition flex items-center justify-center">
-                <Check className="w-5 h-5 mr-2" /> Confirm Booking
-              </button>
-            </form>
+            </div>
           </div>
         </div>
       )}
-    </Layout>
+
+      {stage === 'check_due' && (
+        <div className="glass-card p-6 border-2 border-amber-300 bg-amber-50/60">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">
+              <HelpCircle className="w-7 h-7" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-slate-800 mb-1">Has this month's gas cylinder run out?</h3>
+              <p className="text-sm text-slate-500 mb-4">Booked on {active.booked_date} — it's been {daysSinceBooked} days.</p>
+              <div className="flex flex-wrap gap-3">
+                <button onClick={onSnooze} className="glass-btn-secondary px-5 py-2.5 rounded-xl font-semibold text-sm">
+                  Not Yet
+                </button>
+                <button onClick={onAcknowledge} className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
+                  Yes, I've Noticed — I'll Book
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {stage === 'ready_to_book' && (
+        <div className="glass-card p-6 border-2 border-rose-300 bg-rose-50/60">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center flex-shrink-0">
+              <Flame className="w-7 h-7" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-slate-800 mb-1">Don't forget to book!</h3>
+              <p className="text-sm text-slate-500 mb-4">You said you'd book a new cylinder — the alarm will keep reminding you daily until you do.</p>
+              <button onClick={onBookClick} className="bg-rose-600 hover:bg-rose-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
+                Yes, I've Booked
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {stage === 'ok' && (
+        <div className="glass-card p-6 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0">
+            <Check className="w-7 h-7" />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-800">All set</h3>
+            <p className="text-sm text-slate-500">Cylinder received, day {daysSinceBooked}. Next check-in around <span className="font-semibold text-slate-700">{active.next_check_date}</span>.</p>
+          </div>
+        </div>
+      )}
+
+      {Capacitor.isNativePlatform() && (
+        <button onClick={() => AlarmSettings.openGasAlarm()} className="glass-card p-6 flex items-center gap-4 w-full text-left mt-6" title="Customize the daily check-in alarm time">
+          <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center flex-shrink-0">
+            <AlarmClock className="w-7 h-7" />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-800">Alarm Time Settings</h3>
+            <p className="text-sm text-slate-500">Change the daily check-in time, tone, and permissions.</p>
+          </div>
+        </button>
+      )}
+    </>
   );
 }
 

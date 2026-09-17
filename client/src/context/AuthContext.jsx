@@ -9,19 +9,13 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function init() {
-      // Ask the Flask session (the __session cookie) who's logged in — this
-      // is the source of truth, not Firebase's client-side auth state alone,
-      // since /authorize is what actually creates the Flask-Login session.
-      try {
-        setUser(await api.get('/api/me'));
-      } catch {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-    init();
+    // On load, ask the Flask session (the __session cookie) who's logged in —
+    // this is the source of truth, not Firebase's client-side auth state alone,
+    // since /authorize is what actually creates the Flask-Login session.
+    api.get('/api/me')
+      .then((data) => setUser(data))
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
 
     // Keep Firebase's own auth state in sync too (needed so a stale Google popup
     // session doesn't silently disagree with the Flask session).

@@ -11,57 +11,53 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 
-/**
- * Native Google Sign-In, launched via Google Play Services rather than the
- * WebView. Google actively blocks the OAuth consent screen from loading
- * inside an embedded WebView (the Capacitor JS SDK's signInWithRedirect/
- * signInWithPopup both render there), which is why sign-in used to hang
- * forever on the native build. This plugin gets a Google ID token natively;
- * the JS side then exchanges it for a Firebase credential.
- */
+/** Native Google Sign-In, bridged into the web app's Firebase JS Auth.
+ *
+ * Google blocks OAuth sign-in inside generic WebViews — both the popup and
+ * the full-page-redirect flow get flagged as an "insecure browser" and
+ * either fail outright or bounce out to the system browser with no way
+ * back into the app. The real fix is to never attempt Google sign-in
+ * inside the WebView at all: this plugin runs the native Google account
+ * picker (the same trusted UI Play Services apps use), then hands the
+ * resulting ID token back to JS, which completes Firebase sign-in via
+ * signInWithCredential — no popup, no redirect, no WebView involved.
+ *
+ * It also signs the *native* FirebaseAuth SDK in with the same credential —
+ * that's a separate session from the WebView's JS-side Firebase Auth, and
+ * it's what the native alarm engine (AlarmSettingsActivity) checks. Without
+ * this, signing in on the main screen wouldn't carry over to Alarm
+ * Settings, and the user would have to sign in twice. */
 @CapacitorPlugin(name = "GoogleAuth")
 class GoogleAuthPlugin : Plugin() {
-    private lateinit var client: GoogleSignInClient
+    private lateinit var googleSignInClient: GoogleSignInClient
 
     override fun load() {
-        val webClientId = context.getString(R.string.default_web_client_id)
-        val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(webClientId)
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id))
             .requestEmail()
             .build()
-        client = GoogleSignIn.getClient(context, options)
+        googleSignInClient = GoogleSignIn.getClient(context, gso)
     }
 
     @PluginMethod
     fun signIn(call: PluginCall) {
-        saveCall(call)
-        startActivityForResult(call, client.signInIntent, "signInResult")
+        startActivityForResult(call, googleSignInClient.signInIntent, "handleSignInResult")
     }
 
     @ActivityCallback
-    private fun signInResult(call: PluginCall?, result: ActivityResult) {
+    private fun handleSignInResult(call: PluginCall?, result: ActivityResult) {
         if (call == null) return
         try {
-            val account = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-                .getResult(ApiException::class.java)
-            val idToken = account?.idToken
-            if (idToken == null) {
-                call.reject("Google did not return an ID token.")
-                return
-            }
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            val account = task.getResult(ApiException::class.java)
             val ret = JSObject()
-            ret.put("idToken", idToken)
+            ret.put("idToken", account.idToken)
             call.resolve(ret)
         } catch (e: ApiException) {
-            call.reject("Google sign-in failed (code ${e.statusCode})", e)
-        }
-    }
-
-    @PluginMethod
-    fun signOut(call: PluginCall) {
-        client.signOut().addOnCompleteListener {
-            call.resolve()
+            call.reject("Google sign-in failed (code ${e.statusCode})")
         }
     }
 }

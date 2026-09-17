@@ -41,6 +41,11 @@
             android:theme="@style/Theme.NewspaperAlarm" />
 
         <activity
+            android:name=".GasAlarmSettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NewspaperAlarm" />
+
+        <activity
             android:name=".AlarmActivity"
             android:exported="false"
             android:excludeFromRecents="true"
