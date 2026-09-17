@@ -548,7 +548,7 @@ def api_newspaper_history():
 def api_gas():
     active, _ = core.get_active_gas_cylinder(current_user.id)
     today_str = core.get_ist_now().strftime('%Y-%m-%d')
-    is_check_due = bool(active and active.get('next_check_date', '9999-99-99') <= today_str)
+    is_check_due = bool(active and active.get('received') and (active.get('next_check_date') or '9999-99-99') <= today_str)
 
     days_until_rebook = 0
     if active:
@@ -619,6 +619,37 @@ def api_gas_snooze():
     if next_check is None:
         return jsonify({'status': 'error', 'message': 'No active cylinder to check in on.'}), 400
     return jsonify({'status': 'success', 'next_check_date': next_check})
+
+
+@api_bp.route('/gas/acknowledge', methods=['POST'])
+@login_required
+def api_gas_acknowledge():
+    ok = core.acknowledge_gas_checkin(current_user.id)
+    if not ok:
+        return jsonify({'status': 'error', 'message': 'No active cylinder to acknowledge.'}), 400
+    return jsonify({'status': 'success'})
+
+
+@api_bp.route('/gas/mark_received', methods=['POST'])
+@login_required
+def api_gas_mark_received():
+    ok = core.mark_gas_received(current_user.id)
+    if not ok:
+        return jsonify({'status': 'error', 'message': 'No active cylinder to mark as received.'}), 400
+    return jsonify({'status': 'success'})
+
+
+@api_bp.route('/gas/set_code', methods=['POST'])
+@login_required
+def api_gas_set_code():
+    data = request.get_json(silent=True) or {}
+    code = (data.get('code') or '').strip()
+    if not code:
+        return jsonify({'status': 'error', 'message': 'Please enter the code.'}), 400
+    ok = core.set_gas_delivery_code(current_user.id, code)
+    if not ok:
+        return jsonify({'status': 'error', 'message': 'No active cylinder to add a code to.'}), 400
+    return jsonify({'status': 'success'})
 
 
 # --- Public share view (no auth) ---

@@ -11,7 +11,6 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
-import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.Button
 import android.widget.TextView
@@ -26,20 +25,20 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.Calendar
 
-class AlarmSettingsActivity : AppCompatActivity() {
+/** Dedicated native alarm screen for the gas cylinder check-in — kept
+ * separate from AlarmSettingsActivity (newspaper) on purpose, so each
+ * feature's alarm lives where that feature lives (Gas Expense page vs.
+ * Newspaper Tracker page) instead of one combined screen. */
+class GasAlarmSettingsActivity : AppCompatActivity() {
 
     private lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var statusText: TextView
-    private lateinit var alarmTimeTexts: List<TextView>
+    private lateinit var gasAlarmTimeText: TextView
     private lateinit var signInButton: Button
-    private lateinit var skipTodayLabel: TextView
     private lateinit var toneLabel: TextView
+
     private val signInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -66,16 +65,11 @@ class AlarmSettingsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_gas_alarm)
 
         statusText = findViewById(R.id.statusText)
-        alarmTimeTexts = listOf(
-            findViewById(R.id.alarmTimeText1),
-            findViewById(R.id.alarmTimeText2),
-            findViewById(R.id.alarmTimeText3)
-        )
+        gasAlarmTimeText = findViewById(R.id.gasAlarmTimeText)
         signInButton = findViewById(R.id.btnSignIn)
-        skipTodayLabel = findViewById(R.id.skipTodayLabel)
         toneLabel = findViewById(R.id.toneLabel)
 
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -85,12 +79,8 @@ class AlarmSettingsActivity : AppCompatActivity() {
         googleSignInClient = GoogleSignIn.getClient(this, gso)
 
         signInButton.setOnClickListener { signInLauncher.launch(googleSignInClient.signInIntent) }
-        findViewById<View>(R.id.alarmRow1).setOnClickListener { showTimePickerDialog(1) }
-        findViewById<View>(R.id.alarmRow2).setOnClickListener { showTimePickerDialog(2) }
-        findViewById<View>(R.id.alarmRow3).setOnClickListener { showTimePickerDialog(3) }
-        findViewById<View>(R.id.cardSkipToday).setOnClickListener { bounce(it); toggleSkipToday() }
+        findViewById<View>(R.id.gasAlarmRow).setOnClickListener { showGasTimePickerDialog() }
         findViewById<View>(R.id.cardSelectTone).setOnClickListener { bounce(it); launchTonePicker() }
-        findViewById<View>(R.id.cardMarkTaken).setOnClickListener { bounce(it); markTakenNow() }
         findViewById<View>(R.id.cardTestAlarm).setOnClickListener {
             bounce(it)
             AlarmScheduler.scheduleTestAlarmIn1Minute(this)
@@ -106,9 +96,6 @@ class AlarmSettingsActivity : AppCompatActivity() {
         animateEntrance()
     }
 
-    /** Real colored drop-shadows (API 28+) behind each glowing card, so the
-     * neon border actually radiates onto the dark background instead of
-     * just sitting there as a flat outline. */
     private fun applyNeonShadows() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return
         fun glow(id: Int, color: Int) {
@@ -117,10 +104,8 @@ class AlarmSettingsActivity : AppCompatActivity() {
                 outlineSpotShadowColor = color
             }
         }
-        glow(R.id.cardDailyAlarms, ContextCompat.getColor(this, R.color.neon_blue))
-        glow(R.id.cardSkipToday, ContextCompat.getColor(this, R.color.amber))
+        glow(R.id.cardGasAlarm, ContextCompat.getColor(this, R.color.rose))
         glow(R.id.cardSelectTone, ContextCompat.getColor(this, R.color.brand_green))
-        glow(R.id.cardMarkTaken, ContextCompat.getColor(this, R.color.brand_green))
         glow(R.id.cardTestAlarm, ContextCompat.getColor(this, R.color.brand_indigo))
         glow(R.id.cardPermissions, ContextCompat.getColor(this, R.color.rose))
     }
@@ -128,13 +113,10 @@ class AlarmSettingsActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updateStatus()
-        updateAlarmTimeLabel()
-        updateSkipButtonLabel()
+        updateGasAlarmTimeLabel()
         updateToneLabel()
     }
 
-    /** Cards pop in with a bouncy overshoot, staggered — turns a static list
-     * into a moment instead of everything just appearing at once. */
     private fun animateEntrance() {
         val root = findViewById<View>(android.R.id.content) as? android.view.ViewGroup ?: return
         val scroller = root.getChildAt(0) as? android.view.ViewGroup ?: return
@@ -169,31 +151,21 @@ class AlarmSettingsActivity : AppCompatActivity() {
         if (user != null) {
             signInButton.visibility = View.GONE
             statusText.text = getString(R.string.status_signed_in, user.displayName ?: user.email ?: "")
-            AlarmScheduler.scheduleUserAlarms(this)
+            AlarmScheduler.scheduleGasAlarm(this)
         } else {
             signInButton.visibility = View.VISIBLE
             statusText.text = getString(R.string.status_signed_out)
         }
     }
 
-    private fun updateAlarmTimeLabel() {
-        for (slot in 1..AlarmScheduler.SLOT_COUNT) {
-            val hour = Prefs.getAlarmHour(this, slot)
-            val minute = Prefs.getAlarmMinute(this, slot)
-            val calendar = Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, hour)
-                set(Calendar.MINUTE, minute)
-            }
-            alarmTimeTexts[slot - 1].text = android.text.format.DateFormat.format("h:mm a", calendar)
+    private fun updateGasAlarmTimeLabel() {
+        val hour = Prefs.getGasAlarmHour(this)
+        val minute = Prefs.getGasAlarmMinute(this)
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
         }
-    }
-
-    private fun updateSkipButtonLabel() {
-        skipTodayLabel.text = if (Prefs.isTodaySkipped(this)) {
-            getString(R.string.skipped_today)
-        } else {
-            getString(R.string.skip_today)
-        }
+        gasAlarmTimeText.text = android.text.format.DateFormat.format("h:mm a", calendar)
     }
 
     private fun updateToneLabel() {
@@ -210,36 +182,27 @@ class AlarmSettingsActivity : AppCompatActivity() {
         toneLabel.text = name
     }
 
-    private fun showTimePickerDialog(slot: Int) {
+    private fun showGasTimePickerDialog() {
         val view = layoutInflater.inflate(R.layout.dialog_time_picker, null)
         val timePicker = view.findViewById<TimePicker>(R.id.timePicker)
         timePicker.setIs24HourView(false)
-        timePicker.hour = Prefs.getAlarmHour(this, slot)
-        timePicker.minute = Prefs.getAlarmMinute(this, slot)
+        timePicker.hour = Prefs.getGasAlarmHour(this)
+        timePicker.minute = Prefs.getGasAlarmMinute(this)
 
         val dialog = AlertDialog.Builder(this)
             .setView(view)
             .create()
 
         view.findViewById<Button>(R.id.btnOkTime).setOnClickListener {
-            Prefs.setAlarmHour(this, slot, timePicker.hour)
-            Prefs.setAlarmMinute(this, slot, timePicker.minute)
-            AlarmScheduler.scheduleSlot(this, slot)
-            updateAlarmTimeLabel()
+            Prefs.setGasAlarmHour(this, timePicker.hour)
+            Prefs.setGasAlarmMinute(this, timePicker.minute)
+            AlarmScheduler.scheduleGasAlarm(this)
+            updateGasAlarmTimeLabel()
             dialog.dismiss()
         }
         view.findViewById<Button>(R.id.btnCancelTime).setOnClickListener { dialog.dismiss() }
 
         dialog.show()
-    }
-
-    private fun toggleSkipToday() {
-        if (Prefs.isTodaySkipped(this)) {
-            Prefs.setSkipDate(this, null)
-        } else {
-            Prefs.setSkipDate(this, Prefs.todayString())
-        }
-        updateSkipButtonLabel()
     }
 
     private fun launchTonePicker() {
@@ -250,7 +213,7 @@ class AlarmSettingsActivity : AppCompatActivity() {
             putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
             putExtra(
                 RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI,
-                RingtoneManager.getActualDefaultRingtoneUri(this@AlarmSettingsActivity, RingtoneManager.TYPE_ALARM)
+                RingtoneManager.getActualDefaultRingtoneUri(this@GasAlarmSettingsActivity, RingtoneManager.TYPE_ALARM)
             )
             putExtra(
                 RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
@@ -303,25 +266,6 @@ class AlarmSettingsActivity : AppCompatActivity() {
                 != PackageManager.PERMISSION_GRANTED
             ) {
                 notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
-        }
-    }
-
-    private fun markTakenNow() {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val didMark = ApiClient.markTodayTakenIfNeeded()
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        this@AlarmSettingsActivity,
-                        if (didMark) "Marked as taken!" else getString(R.string.already_taken),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@AlarmSettingsActivity, "Failed: ${e.message}", Toast.LENGTH_LONG).show()
-                }
             }
         }
     }

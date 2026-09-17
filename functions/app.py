@@ -430,14 +430,20 @@ def book_gas_cylinder(user_id, price):
     if active_ref:
         active_ref.update({'status': 'finished', 'finished_date': today_str})
 
-    next_check = (today + timedelta(days=GAS_CHECK_IN_AFTER_DAYS)).strftime('%Y-%m-%d')
+    # next_check_date isn't set yet — it can't be, since the ~40-day
+    # duration only starts once this cylinder is actually installed
+    # (see mark_gas_received), not from the moment it's booked.
     new_doc = {
         'booked_date': today_str,
         'price': price,
         'status': 'active',
         'finished_date': None,
-        'next_check_date': next_check,
+        'next_check_date': None,
         'last_notified_date': None,
+        'acknowledged': False,
+        'received': False,
+        'received_date': None,
+        'delivery_code': None,
         'created_at': firestore.SERVER_TIMESTAMP,
     }
     db.collection('users').document(user_id).collection('gas_cylinders').add(new_doc)
@@ -449,8 +455,44 @@ def snooze_gas_checkin(user_id):
     if not active_ref:
         return None
     next_check = (get_ist_now() + timedelta(days=GAS_RECHECK_INTERVAL_DAYS)).strftime('%Y-%m-%d')
-    active_ref.update({'next_check_date': next_check, 'last_notified_date': None})
+    active_ref.update({'next_check_date': next_check, 'last_notified_date': None, 'acknowledged': False})
     return next_check
+
+def acknowledge_gas_checkin(user_id):
+    """User has seen the check-in prompt and committed to booking soon, but
+    hasn't actually booked yet — the daily reminder keeps nagging either way
+    (see check_gas_cylinder_reminders), this is just a status flag for the UI
+    so 'I'll book' and 'I've booked' read as two distinct, visible steps."""
+    active_data, active_ref = get_active_gas_cylinder(user_id)
+    if not active_ref:
+        return False
+    active_ref.update({'acknowledged': True})
+    return True
+
+def mark_gas_received(user_id):
+    """User confirms the newly-booked cylinder has actually arrived and been
+    installed — this is when it actually starts being used, so the ~40-day
+    check-in countdown starts from here, not from the (possibly days-earlier)
+    booking date."""
+    active_data, active_ref = get_active_gas_cylinder(user_id)
+    if not active_ref:
+        return False
+    today = get_ist_now()
+    today_str = today.strftime('%Y-%m-%d')
+    next_check = (today + timedelta(days=GAS_CHECK_IN_AFTER_DAYS)).strftime('%Y-%m-%d')
+    active_ref.update({'received': True, 'received_date': today_str, 'next_check_date': next_check})
+    return True
+
+def set_gas_delivery_code(user_id, code):
+    """The distributor's SMS verification code, given to the delivery person
+    to confirm the right customer — usually arrives by SMS sometime after
+    booking, so this is editable independently rather than only at booking
+    time."""
+    active_data, active_ref = get_active_gas_cylinder(user_id)
+    if not active_ref:
+        return False
+    active_ref.update({'delivery_code': code})
+    return True
 
 # --- Routes ---
 @app.route('/')
@@ -1428,9 +1470,9 @@ def check_gas_cylinder_reminders():
                 print(f"Error checking gas cylinder for user {user_id}: {e}")
                 continue
 
-            if not cylinder:
-                continue
-            if cylinder.get('next_check_date', '9999-99-99') > today_str:
+            if not cylinder or not cylinder.get('received'):
+                continue  # not installed yet — nothing to ask about
+            if (cylinder.get('next_check_date') or '9999-99-99') > today_str:
                 continue
             if cylinder.get('last_notified_date') == today_str:
                 continue  # already pinged today, don't spam

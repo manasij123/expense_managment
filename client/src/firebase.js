@@ -3,13 +3,17 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithCredential,
   onAuthStateChanged,
   signOut as firebaseSignOut,
 } from 'firebase/auth';
 import { getMessaging, getToken as getFcmToken, onMessage } from 'firebase/messaging';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
+
+// Native-only: runs the real native Google account picker (see
+// GoogleAuthPlugin.kt) instead of a WebView popup/redirect, which Google
+// blocks. No-op on the regular website.
+const GoogleAuthNative = registerPlugin('GoogleAuth');
 
 // Same project/config the server-rendered app already used (functions/templates/login.html, base.html).
 const firebaseConfig = {
@@ -29,25 +33,19 @@ export function watchAuthState(callback) {
   return onAuthStateChanged(auth, callback);
 }
 
-// Popups are unreliable inside the Capacitor-wrapped Android app's WebView
-// (Google actively blocks sign-in in many embedded contexts), so the native
-// build uses a full-page redirect instead. The regular website keeps the
-// popup flow unchanged, since that's already proven to work well there.
+// Popups (and redirects) are unreliable inside the Capacitor-wrapped Android
+// app's WebView — Google blocks sign-in in embedded WebViews outright — so
+// the native build runs the real native Google account picker instead, then
+// completes Firebase sign-in from that credential. The regular website keeps
+// the popup flow unchanged, since that's already proven to work well there.
 export async function signInWithGoogle() {
   if (Capacitor.isNativePlatform()) {
-    await signInWithRedirect(auth, googleProvider);
-    return null; // page is navigating away; nothing more to return here
+    const { idToken } = await GoogleAuthNative.signIn();
+    const credential = GoogleAuthProvider.credential(idToken);
+    const result = await signInWithCredential(auth, credential);
+    return result.user.getIdToken();
   }
   const result = await signInWithPopup(auth, googleProvider);
-  return result.user.getIdToken();
-}
-
-// Call once on app startup — completes a sign-in that was left in progress
-// by signInWithRedirect (a no-op if we didn't just come back from one).
-export async function completeRedirectSignIn() {
-  if (!Capacitor.isNativePlatform()) return null;
-  const result = await getRedirectResult(auth);
-  if (!result) return null;
   return result.user.getIdToken();
 }
 

@@ -23,7 +23,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/app_name"
+                android:text="@string/gas_alarm_title_bar"
                 android:textSize="22sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_primary" />
@@ -46,8 +46,8 @@
             android:text="@string/sign_in_with_google"
             android:textAllCaps="false"
             android:textStyle="bold"
-            android:textColor="@color/brand_indigo"
-            android:background="@drawable/btn_outline_indigo"
+            android:textColor="@color/rose"
+            android:background="@drawable/btn_outline_rose"
             android:paddingTop="14dp"
             android:paddingBottom="14dp"
             android:layout_marginBottom="16dp" />
@@ -78,22 +78,22 @@
 
         </LinearLayout>
 
-        <!-- Newspaper alarms card: three independently-settable times -->
+        <!-- Gas alarm card: one daily check-in time -->
         <LinearLayout
-            android:id="@+id/cardDailyAlarms"
+            android:id="@+id/cardGasAlarm"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@drawable/card_bg_highlight"
+            android:background="@drawable/card_bg_rose"
             android:elevation="8dp"
             android:layout_marginBottom="16dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/daily_alarm"
+                android:text="@string/gas_alarm_label"
                 android:textSize="12sp"
-                android:textColor="@color/text_secondary"
+                android:textColor="@color/rose"
                 android:letterSpacing="0.05"
                 android:textAllCaps="true"
                 android:paddingStart="16dp"
@@ -102,7 +102,7 @@
                 android:paddingBottom="4dp" />
 
             <LinearLayout
-                android:id="@+id/alarmRow1"
+                android:id="@+id/gasAlarmRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -120,25 +120,25 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:background="@drawable/circle_tint_bg"
-                        android:backgroundTint="@color/neon_blue_soft" />
+                        android:backgroundTint="@color/rose_soft" />
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_alarm"
-                        android:tint="@color/neon_blue" />
+                        android:tint="@color/rose" />
                 </FrameLayout>
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/alarm_slot_1"
+                    android:text="@string/gas_check_time_label"
                     android:textSize="13sp"
                     android:textColor="@color/text_secondary" />
 
                 <TextView
-                    android:id="@+id/alarmTimeText1"
+                    android:id="@+id/gasAlarmTimeText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="18sp"
@@ -153,168 +153,37 @@
                     android:tint="@color/text_secondary" />
             </LinearLayout>
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginStart="14dp"
-                android:layout_marginEnd="14dp"
-                android:background="#14FFFFFF" />
-
-            <LinearLayout
-                android:id="@+id/alarmRow2"
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="14dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground">
-
-                <FrameLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginEnd="14dp">
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/circle_tint_bg"
-                        android:backgroundTint="@color/neon_blue_soft" />
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_alarm"
-                        android:tint="@color/neon_blue" />
-                </FrameLayout>
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/alarm_slot_2"
-                    android:textSize="13sp"
-                    android:textColor="@color/text_secondary" />
-
-                <TextView
-                    android:id="@+id/alarmTimeText2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginEnd="8dp" />
-
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_chevron_right"
-                    android:tint="@color/text_secondary" />
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginStart="14dp"
-                android:layout_marginEnd="14dp"
-                android:background="#14FFFFFF" />
-
-            <LinearLayout
-                android:id="@+id/alarmRow3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="14dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground">
-
-                <FrameLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginEnd="14dp">
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/circle_tint_bg"
-                        android:backgroundTint="@color/neon_blue_soft" />
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_alarm"
-                        android:tint="@color/neon_blue" />
-                </FrameLayout>
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/alarm_slot_3"
-                    android:textSize="13sp"
-                    android:textColor="@color/text_secondary" />
-
-                <TextView
-                    android:id="@+id/alarmTimeText3"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginEnd="8dp" />
-
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_chevron_right"
-                    android:tint="@color/text_secondary" />
-            </LinearLayout>
+                android:text="@string/gas_alarm_hint"
+                android:textSize="10sp"
+                android:textColor="@color/text_secondary"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="12dp" />
 
         </LinearLayout>
 
-        <!-- Quick action grid: 2x2 -->
+        <!-- Action row: tone + test -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="12dp">
-
-            <LinearLayout
-                android:id="@+id/cardSkipToday"
-                style="@style/ActionCardInner"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                android:background="@drawable/action_card_glow_amber"
-                android:elevation="6dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground">
-                <FrameLayout android:id="@+id/iconFrameSkip" style="@style/ActionCardIconFrame">
-                    <View android:layout_width="match_parent" android:layout_height="match_parent"
-                        android:background="@drawable/circle_tint_bg" android:backgroundTint="@color/amber_soft" />
-                    <ImageView android:layout_width="22dp" android:layout_height="22dp" android:layout_gravity="center"
-                        android:src="@drawable/ic_do_not_disturb" android:tint="@color/amber" />
-                </FrameLayout>
-                <TextView
-                    android:id="@+id/skipTodayLabel"
-                    style="@style/ActionCardLabel"
-                    android:text="@string/skip_today" />
-            </LinearLayout>
+            android:layout_marginBottom="16dp">
 
             <LinearLayout
                 android:id="@+id/cardSelectTone"
                 style="@style/ActionCardInner"
                 android:layout_width="0dp"
                 android:layout_weight="1"
-                android:layout_marginStart="6dp"
+                android:layout_marginEnd="6dp"
                 android:background="@drawable/action_card_glow_green"
                 android:elevation="6dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?android:attr/selectableItemBackground">
-                <FrameLayout android:id="@+id/iconFrameTone" style="@style/ActionCardIconFrame">
+                <FrameLayout style="@style/ActionCardIconFrame">
                     <View android:layout_width="match_parent" android:layout_height="match_parent"
                         android:background="@drawable/circle_tint_bg" android:backgroundTint="@color/brand_green_soft" />
                     <ImageView android:layout_width="22dp" android:layout_height="22dp" android:layout_gravity="center"
@@ -324,36 +193,6 @@
                     android:id="@+id/toneLabel"
                     style="@style/ActionCardLabel"
                     android:text="@string/select_alarm_tone" />
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
-
-            <LinearLayout
-                android:id="@+id/cardMarkTaken"
-                style="@style/ActionCardInner"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                android:background="@drawable/action_card_glow_green"
-                android:elevation="6dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground">
-                <FrameLayout android:id="@+id/iconFrameMarkTaken" style="@style/ActionCardIconFrame">
-                    <View android:layout_width="match_parent" android:layout_height="match_parent"
-                        android:background="@drawable/circle_tint_bg" android:backgroundTint="@color/brand_green_soft" />
-                    <ImageView android:layout_width="22dp" android:layout_height="22dp" android:layout_gravity="center"
-                        android:src="@drawable/ic_check_circle" android:tint="@color/brand_green" />
-                </FrameLayout>
-                <TextView
-                    style="@style/ActionCardLabel"
-                    android:text="@string/mark_taken_short" />
             </LinearLayout>
 
             <LinearLayout
@@ -367,7 +206,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?android:attr/selectableItemBackground">
-                <FrameLayout android:id="@+id/iconFrameTestAlarm" style="@style/ActionCardIconFrame">
+                <FrameLayout style="@style/ActionCardIconFrame">
                     <View android:layout_width="match_parent" android:layout_height="match_parent"
                         android:background="@drawable/circle_tint_bg" android:backgroundTint="@color/brand_indigo_soft" />
                     <ImageView android:layout_width="22dp" android:layout_height="22dp" android:layout_gravity="center"
