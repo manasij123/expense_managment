@@ -10,11 +10,17 @@ import { useFlash } from '../context/FlashContext';
 // can't do this. No-op on the website.
 const AlarmSettings = registerPlugin('AlarmSettings');
 
-// Which step of the acknowledge -> book -> received flow the active
-// cylinder is currently in, driving what the Alarming tab shows.
-function gasStage(active, isCheckDue) {
+// Which step of the acknowledge -> book -> received flow the cylinder is
+// currently in, driving what the Alarming tab shows. A pending order (one
+// that's been booked to replace the cylinder still in use) always takes
+// priority — asking "has it run out?" about the old one is pointless once
+// a replacement is already on the way.
+function gasStage(active, pendingOrder, isCheckDue) {
+  if (pendingOrder) return 'awaiting_delivery';
+  // The very first cylinder ever booked has no old one to keep running, so
+  // it goes straight to 'active' but still starts out unreceived.
+  if (active && !active.received) return 'awaiting_delivery';
   if (!active) return 'none';
-  if (!active.received) return 'awaiting_delivery';
   if (isCheckDue && !active.acknowledged) return 'check_due';
   if (isCheckDue && active.acknowledged) return 'ready_to_book';
   return 'ok';
@@ -46,8 +52,8 @@ export default function GasExpense() {
     );
   }
 
-  const { active, is_check_due, history, total_expense, days_until_rebook } = data;
-  const stage = gasStage(active, is_check_due);
+  const { active, pending_order, is_check_due, history, total_expense, days_until_rebook } = data;
+  const stage = gasStage(active, pending_order, is_check_due);
 
   async function handleSnooze() {
     try {
@@ -83,7 +89,7 @@ export default function GasExpense() {
     e.preventDefault();
     try {
       await api.post('/api/gas/book', { price: Number(price) });
-      showFlash(active ? 'New cylinder booked!' : 'Cylinder booked!');
+      showFlash(active ? 'New cylinder booked! Mark it received once it actually arrives.' : 'Cylinder booked!');
       setBookModalOpen(false);
       load();
     } catch (err) {
@@ -92,7 +98,7 @@ export default function GasExpense() {
   }
 
   function openCodeModal() {
-    setCode(active?.delivery_code || '');
+    setCode((pending_order || active)?.delivery_code || '');
     setCodeModalOpen(true);
   }
 
@@ -109,7 +115,7 @@ export default function GasExpense() {
   }
 
   const daysSinceBooked = active
-    ? Math.floor((new Date() - new Date(active.booked_date)) / (1000 * 60 * 60 * 24))
+    ? Math.floor((new Date() - new Date(active.received_date || active.booked_date)) / (1000 * 60 * 60 * 24))
     : null;
 
   return (
@@ -117,6 +123,7 @@ export default function GasExpense() {
       {tab === 'record' ? (
         <RecordTab
           active={active}
+          pendingOrder={pending_order}
           history={history}
           totalExpense={total_expense}
           daysUntilRebook={days_until_rebook}
@@ -128,6 +135,7 @@ export default function GasExpense() {
       ) : (
         <AlarmingTab
           active={active}
+          pendingOrder={pending_order}
           stage={stage}
           daysSinceBooked={daysSinceBooked}
           onSnooze={handleSnooze}
@@ -211,7 +219,7 @@ export default function GasExpense() {
   );
 }
 
-function RecordTab({ active, history, totalExpense, daysUntilRebook, daysSinceBooked, isCheckDue, onBookClick, onCodeClick }) {
+function RecordTab({ active, pendingOrder, history, totalExpense, daysUntilRebook, daysSinceBooked, isCheckDue, onBookClick, onCodeClick }) {
   return (
     <>
       {/* Stats Row */}
@@ -232,11 +240,7 @@ function RecordTab({ active, history, totalExpense, daysUntilRebook, daysSinceBo
               </div>
               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Current Cylinder</p>
               <span className="text-emerald-600 font-bold text-lg">Day {daysSinceBooked}</span>
-              <span className="text-[10px] text-slate-400 mt-1">₹{active.price} • booked {active.booked_date}</span>
-              <button onClick={onCodeClick} className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-600 hover:bg-rose-100 transition">
-                <KeyRound className="w-3.5 h-3.5" />
-                {active.delivery_code ? `Code: ${active.delivery_code}` : 'Add Delivery Code'}
-              </button>
+              <span className="text-[10px] text-slate-400 mt-1">₹{active.price} • {active.received ? 'received' : 'booked'} {active.received_date || active.booked_date}</span>
             </div>
           ) : (
             <button type="button" onClick={onBookClick} className="glass-card p-5 flex flex-col justify-center items-center text-center relative overflow-hidden cursor-pointer group w-full">
@@ -258,14 +262,27 @@ function RecordTab({ active, history, totalExpense, daysUntilRebook, daysSinceBo
         </div>
       </div>
 
-      {active && !isCheckDue && (
+      {pendingOrder && (
+        <div className="glass-card p-4 mb-8 flex items-center justify-between gap-3 border-2 border-indigo-200 bg-indigo-50/60">
+          <div>
+            <p className="text-sm font-semibold text-slate-700">New cylinder booked on {pendingOrder.booked_date} for ₹{pendingOrder.price} — waiting for delivery.</p>
+            <p className="text-xs text-slate-500 mt-0.5">The one currently in use above keeps running until this one is marked received.</p>
+          </div>
+          <button onClick={onCodeClick} className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-indigo-600 hover:bg-indigo-100 transition">
+            <KeyRound className="w-3.5 h-3.5" />
+            {pendingOrder.delivery_code ? `Code: ${pendingOrder.delivery_code}` : 'Add Delivery Code'}
+          </button>
+        </div>
+      )}
+
+      {active && active.received && !isCheckDue && (
         <div className="glass-card p-4 mb-8 flex items-center gap-3">
           <CalendarClock className="w-5 h-5 text-slate-400 flex-shrink-0" />
           <p className="text-sm text-slate-500">Next check-in around <span className="font-semibold text-slate-700">{active.next_check_date}</span>.</p>
         </div>
       )}
 
-      {active && (
+      {active && !pendingOrder && (
         <div className="flex justify-end items-center gap-3 mb-6">
           {daysUntilRebook > 0 ? (
             <span className="text-xs text-slate-400">Distributor rule: new booking available in {daysUntilRebook} day{daysUntilRebook > 1 ? 's' : ''}</span>
@@ -307,6 +324,8 @@ function RecordTab({ active, history, totalExpense, daysUntilRebook, daysSinceBo
                   <td data-label="Status" className="px-6 py-4 text-center">
                     {c.status === 'active' ? (
                       <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-600">Active</span>
+                    ) : c.status === 'ordered' ? (
+                      <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-indigo-50 text-indigo-600">Ordered</span>
                     ) : (
                       <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-slate-100 text-slate-500">Finished</span>
                     )}
@@ -324,7 +343,12 @@ function RecordTab({ active, history, totalExpense, daysUntilRebook, daysSinceBo
   );
 }
 
-function AlarmingTab({ active, stage, daysSinceBooked, onSnooze, onAcknowledge, onMarkReceived, onBookClick, onCodeClick }) {
+function AlarmingTab({ active, pendingOrder, stage, daysSinceBooked, onSnooze, onAcknowledge, onMarkReceived, onBookClick, onCodeClick }) {
+  // Whichever cylinder hasn't been received yet — the pending order, or
+  // (for the very first cylinder, which has no old one to wait on) active
+  // itself while it's still unreceived.
+  const incoming = pendingOrder || active;
+
   return (
     <>
       {stage === 'none' && (
@@ -345,14 +369,17 @@ function AlarmingTab({ active, stage, daysSinceBooked, onSnooze, onAcknowledge, 
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-slate-800 mb-1">Has the new cylinder arrived?</h3>
-              <p className="text-sm text-slate-500 mb-4">Booked on {active.booked_date} — usually arrives within 5 days (longer during a supply crisis).</p>
+              <p className="text-sm text-slate-500 mb-4">
+                Booked on {incoming.booked_date} — usually arrives within 5 days (longer during a supply crisis).
+                {pendingOrder && ' The one currently in use keeps running until you mark this received.'}
+              </p>
               <div className="flex flex-wrap gap-3">
                 <button onClick={onMarkReceived} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
                   Yes, Received It
                 </button>
                 <button onClick={onCodeClick} className="glass-btn-secondary px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-1.5">
                   <KeyRound className="w-4 h-4" />
-                  {active.delivery_code ? `Code: ${active.delivery_code}` : 'Add SMS Code'}
+                  {incoming.delivery_code ? `Code: ${incoming.delivery_code}` : 'Add SMS Code'}
                 </button>
               </div>
             </div>
@@ -368,7 +395,7 @@ function AlarmingTab({ active, stage, daysSinceBooked, onSnooze, onAcknowledge, 
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-slate-800 mb-1">Has this month's gas cylinder run out?</h3>
-              <p className="text-sm text-slate-500 mb-4">Booked on {active.booked_date} — it's been {daysSinceBooked} days.</p>
+              <p className="text-sm text-slate-500 mb-4">Received on {active.received_date || active.booked_date} — it's been {daysSinceBooked} days.</p>
               <div className="flex flex-wrap gap-3">
                 <button onClick={onSnooze} className="glass-btn-secondary px-5 py-2.5 rounded-xl font-semibold text-sm">
                   Not Yet

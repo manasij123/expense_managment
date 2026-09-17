@@ -547,11 +547,12 @@ def api_newspaper_history():
 @login_required
 def api_gas():
     active, _ = core.get_active_gas_cylinder(current_user.id)
+    pending_order, _ = core.get_pending_gas_order(current_user.id)
     today_str = core.get_ist_now().strftime('%Y-%m-%d')
     is_check_due = bool(active and active.get('received') and (active.get('next_check_date') or '9999-99-99') <= today_str)
 
     days_until_rebook = 0
-    if active:
+    if active and not pending_order:
         today_dt = core.datetime.strptime(today_str, '%Y-%m-%d')
         booked_dt = core.datetime.strptime(active['booked_date'], '%Y-%m-%d')
         days_since = (today_dt - booked_dt).days
@@ -565,9 +566,14 @@ def api_gas():
         d = doc.to_dict()
         d['id'] = doc.id
         d['days_lasted'] = None
-        if d.get('status') == 'finished' and d.get('finished_date') and d.get('booked_date'):
+        # "Lasted" counts from when the cylinder actually went into use
+        # (received_date), not from when it was booked — those can be days
+        # apart. Falls back to booked_date for older records from before
+        # received_date existed.
+        start_date = d.get('received_date') or d.get('booked_date')
+        if d.get('status') == 'finished' and d.get('finished_date') and start_date:
             try:
-                b = core.datetime.strptime(d['booked_date'], '%Y-%m-%d')
+                b = core.datetime.strptime(start_date, '%Y-%m-%d')
                 f = core.datetime.strptime(d['finished_date'], '%Y-%m-%d')
                 d['days_lasted'] = (f - b).days
             except ValueError:
@@ -577,6 +583,7 @@ def api_gas():
 
     return jsonify({
         'active': active,
+        'pending_order': pending_order,
         'is_check_due': is_check_due,
         'days_until_rebook': days_until_rebook,
         'history': history,
@@ -595,6 +602,10 @@ def api_gas_book():
         return jsonify({'status': 'error', 'message': 'Please enter a valid price.'}), 400
     if price <= 0:
         return jsonify({'status': 'error', 'message': 'Price must be greater than 0.'}), 400
+
+    pending_order, _ = core.get_pending_gas_order(current_user.id)
+    if pending_order:
+        return jsonify({'status': 'error', 'message': 'A cylinder is already booked and waiting to be marked as received.'}), 400
 
     active, _ = core.get_active_gas_cylinder(current_user.id)
     if active:
@@ -646,6 +657,8 @@ def api_gas_set_code():
     code = (data.get('code') or '').strip()
     if not code:
         return jsonify({'status': 'error', 'message': 'Please enter the code.'}), 400
+    if not code.isdigit() or len(code) != 4:
+        return jsonify({'status': 'error', 'message': 'Code must be exactly 4 digits.'}), 400
     ok = core.set_gas_delivery_code(current_user.id, code)
     if not ok:
         return jsonify({'status': 'error', 'message': 'No active cylinder to add a code to.'}), 400

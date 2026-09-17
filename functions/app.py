@@ -409,6 +409,17 @@ def get_active_gas_cylinder(user_id):
         return doc.to_dict(), doc.reference
     return None, None
 
+def get_pending_gas_order(user_id):
+    """Returns (data, doc_ref) for a cylinder that's been booked to replace
+    the one currently in use, but hasn't been received/installed yet, or
+    (None, None)."""
+    docs = db.collection('users').document(user_id).collection('gas_cylinders') \
+        .where('status', '==', 'ordered').limit(1).stream()
+    doc = next(docs, None)
+    if doc:
+        return doc.to_dict(), doc.reference
+    return None, None
+
 def get_last_gas_price(user_id):
     """Most recently used cylinder price, for pre-filling the booking form."""
     docs = db.collection('users').document(user_id).collection('gas_cylinders') \
@@ -419,16 +430,16 @@ def get_last_gas_price(user_id):
     return GAS_DEFAULT_PRICE
 
 def book_gas_cylinder(user_id, price):
-    """Closes out the current active cylinder (if any) as finished today, and
-    opens a new one — this is the single action for both 'book my very first
-    cylinder' and 'this one's finished, book the next one' since the user
-    always does both in the same breath."""
-    today = get_ist_now()
-    today_str = today.strftime('%Y-%m-%d')
+    """Places an order for a new cylinder. If one is already in use, it
+    keeps being used exactly as before — nothing is finished off until
+    mark_gas_received() confirms the new one has actually arrived, which is
+    often days after booking. Only when nothing is currently in use (the
+    very first cylinder) does the new one go straight to 'active', since
+    there's no old cylinder that would otherwise get finished too early."""
+    today_str = get_ist_now().strftime('%Y-%m-%d')
 
     active_data, active_ref = get_active_gas_cylinder(user_id)
-    if active_ref:
-        active_ref.update({'status': 'finished', 'finished_date': today_str})
+    status = 'ordered' if active_ref else 'active'
 
     # next_check_date isn't set yet — it can't be, since the ~40-day
     # duration only starts once this cylinder is actually installed
@@ -436,7 +447,7 @@ def book_gas_cylinder(user_id, price):
     new_doc = {
         'booked_date': today_str,
         'price': price,
-        'status': 'active',
+        'status': status,
         'finished_date': None,
         'next_check_date': None,
         'last_notified_date': None,
@@ -473,25 +484,45 @@ def mark_gas_received(user_id):
     """User confirms the newly-booked cylinder has actually arrived and been
     installed — this is when it actually starts being used, so the ~40-day
     check-in countdown starts from here, not from the (possibly days-earlier)
-    booking date."""
-    active_data, active_ref = get_active_gas_cylinder(user_id)
-    if not active_ref:
+    booking date. If it's replacing a cylinder still in use, that one is
+    finished off now too, since that's the moment it actually stopped being
+    used — not back when the replacement was merely booked."""
+    pending_data, pending_ref = get_pending_gas_order(user_id)
+    target_ref = pending_ref
+    if target_ref is None:
+        # No separate pending order — this is the very first cylinder,
+        # already sitting as 'active' with received=False.
+        active_data, active_ref = get_active_gas_cylinder(user_id)
+        target_ref = active_ref
+    if target_ref is None:
         return False
+
     today = get_ist_now()
     today_str = today.strftime('%Y-%m-%d')
+
+    if pending_ref is not None:
+        old_active_data, old_active_ref = get_active_gas_cylinder(user_id)
+        if old_active_ref:
+            old_active_ref.update({'status': 'finished', 'finished_date': today_str})
+
     next_check = (today + timedelta(days=GAS_CHECK_IN_AFTER_DAYS)).strftime('%Y-%m-%d')
-    active_ref.update({'received': True, 'received_date': today_str, 'next_check_date': next_check})
+    target_ref.update({'status': 'active', 'received': True, 'received_date': today_str, 'next_check_date': next_check})
     return True
 
 def set_gas_delivery_code(user_id, code):
     """The distributor's SMS verification code, given to the delivery person
-    to confirm the right customer — usually arrives by SMS sometime after
+    to confirm the right customer — belongs to whichever cylinder hasn't
+    been received yet (the pending order, or the active cylinder itself if
+    this is the very first one), usually arriving by SMS sometime after
     booking, so this is editable independently rather than only at booking
     time."""
-    active_data, active_ref = get_active_gas_cylinder(user_id)
-    if not active_ref:
+    pending_data, pending_ref = get_pending_gas_order(user_id)
+    target_ref = pending_ref
+    if target_ref is None:
+        active_data, target_ref = get_active_gas_cylinder(user_id)
+    if not target_ref:
         return False
-    active_ref.update({'delivery_code': code})
+    target_ref.update({'delivery_code': code})
     return True
 
 # --- Routes ---
