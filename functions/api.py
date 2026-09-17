@@ -603,8 +603,8 @@ def api_gas_book():
         return jsonify({'status': 'error', 'message': 'Price must be greater than 0.'}), 400
 
     booking_code = (data.get('booking_code') or '').strip() or None
-    if booking_code and (not booking_code.isdigit() or len(booking_code) != 4):
-        return jsonify({'status': 'error', 'message': 'Booking code must be exactly 4 digits.'}), 400
+    if booking_code and (not booking_code.isdigit() or len(booking_code) != 8):
+        return jsonify({'status': 'error', 'message': 'Booking code must be exactly 8 digits.'}), 400
 
     expected_delivery_date = (data.get('expected_delivery_date') or '').strip() or None
     if expected_delivery_date:
@@ -640,8 +640,8 @@ def api_gas_update_order():
     data = request.get_json(silent=True) or {}
 
     booking_code = (data.get('booking_code') or '').strip() or None
-    if booking_code and (not booking_code.isdigit() or len(booking_code) != 4):
-        return jsonify({'status': 'error', 'message': 'Booking code must be exactly 4 digits.'}), 400
+    if booking_code and (not booking_code.isdigit() or len(booking_code) != 8):
+        return jsonify({'status': 'error', 'message': 'Booking code must be exactly 8 digits.'}), 400
 
     expected_delivery_date = (data.get('expected_delivery_date') or '').strip() or None
     if expected_delivery_date:

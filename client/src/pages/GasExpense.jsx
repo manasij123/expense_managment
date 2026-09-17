@@ -135,14 +135,14 @@ export default function GasExpense() {
 
               <form onSubmit={handleUpdateOrder} className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                 <div>
-                  <label className="block text-slate-500 text-xs font-medium mb-1">Booking Code (4-digit)</label>
+                  <label className="block text-slate-500 text-xs font-medium mb-1">Booking Code (8-digit)</label>
                   <input
                     type="text"
                     inputMode="numeric"
-                    maxLength={4}
+                    maxLength={8}
                     value={orderCode}
                     onChange={(e) => setOrderCode(e.target.value.replace(/\D/g, ''))}
-                    placeholder="1234"
+                    placeholder="12345678"
                     className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                   />
                 </div>
@@ -290,8 +290,8 @@ export default function GasExpense() {
                 <p className="text-xs text-slate-400 mt-2">Price changes now and then — update it if today's price is different.</p>
               </div>
               <div className="mb-6">
-                <label className="block text-gray-600 text-sm font-medium mb-2">Booking Code (4-digit, if you have it)</label>
-                <input type="text" inputMode="numeric" maxLength={4} value={bookingCode} onChange={(e) => setBookingCode(e.target.value.replace(/\D/g, ''))} placeholder="1234" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500" />
+                <label className="block text-gray-600 text-sm font-medium mb-2">Booking Code (8-digit, if you have it)</label>
+                <input type="text" inputMode="numeric" maxLength={8} value={bookingCode} onChange={(e) => setBookingCode(e.target.value.replace(/\D/g, ''))} placeholder="12345678" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500" />
                 <p className="text-xs text-slate-400 mt-2">The distributor often sends this after booking — you can also add it later.</p>
               </div>
               <button type="submit" className="w-full py-3.5 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition flex items-center justify-center">
