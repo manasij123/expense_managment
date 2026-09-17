@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Flame, Banknote, CalendarClock, List, X, Check, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Flame, Banknote, CalendarClock, List, X, Check, HelpCircle, Truck } from 'lucide-react';
 import Layout from '../components/Layout';
 import { api } from '../api';
 import { useFlash } from '../context/FlashContext';
@@ -28,7 +28,7 @@ export default function GasExpense() {
     );
   }
 
-  const { active, is_check_due, history, total_expense, days_until_rebook } = data;
+  const { active, pending_order, is_check_due, history, total_expense, days_until_rebook } = data;
 
   async function handleSnooze() {
     try {
@@ -44,7 +44,7 @@ export default function GasExpense() {
     e.preventDefault();
     try {
       await api.post('/api/gas/book', { price: Number(price) });
-      showFlash(active ? 'New cylinder booked!' : 'Cylinder booked!');
+      showFlash(active ? 'New cylinder booked! Mark it installed once it arrives.' : 'Cylinder booked!');
       setBookModalOpen(false);
       load();
     } catch (err) {
@@ -52,8 +52,19 @@ export default function GasExpense() {
     }
   }
 
+  async function handleInstall() {
+    if (!window.confirm('Has the new cylinder actually been delivered and hooked up now?')) return;
+    try {
+      await api.post('/api/gas/install');
+      showFlash('New cylinder marked as installed!');
+      load();
+    } catch (err) {
+      showFlash(err.message, 'danger');
+    }
+  }
+
   const daysSinceBooked = active
-    ? Math.floor((new Date() - new Date(active.booked_date)) / (1000 * 60 * 60 * 24))
+    ? Math.floor((new Date() - new Date(active.installed_date || active.booked_date)) / (1000 * 60 * 60 * 24))
     : null;
 
   return (
@@ -67,15 +78,35 @@ export default function GasExpense() {
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-slate-800 mb-1">Has this month's gas cylinder run out?</h3>
-              <p className="text-sm text-slate-500 mb-4">Booked on {active.booked_date} — it's been {daysSinceBooked} days.</p>
+              <p className="text-sm text-slate-500 mb-4">Installed on {active.installed_date || active.booked_date} — it's been {daysSinceBooked} days.</p>
               <div className="flex flex-wrap gap-3">
                 <button onClick={handleSnooze} className="glass-btn-secondary px-5 py-2.5 rounded-xl font-semibold text-sm">
                   Not Yet
                 </button>
-                <button onClick={() => setBookModalOpen(true)} className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
-                  Yes, It's Finished — Book New
-                </button>
+                {!pending_order && (
+                  <button onClick={() => setBookModalOpen(true)} className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
+                    Yes, It's Finished — Book New
+                  </button>
+                )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pending Order Banner */}
+      {pending_order && (
+        <div className="glass-card p-6 mb-6 border-2 border-sky-300 bg-sky-50/60">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center flex-shrink-0">
+              <Truck className="w-7 h-7" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-slate-800 mb-1">New cylinder booked — waiting for delivery</h3>
+              <p className="text-sm text-slate-500 mb-4">Booked on {pending_order.booked_date} for ₹{pending_order.price}. Once the delivery person actually swaps it in, mark it installed — that's when the next ~40-day check-in clock starts.</p>
+              <button onClick={handleInstall} className="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
+                Mark as Installed
+              </button>
             </div>
           </div>
         </div>
@@ -99,7 +130,7 @@ export default function GasExpense() {
               </div>
               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Current Cylinder</p>
               <span className="text-emerald-600 font-bold text-lg">Day {daysSinceBooked}</span>
-              <span className="text-[10px] text-slate-400 mt-1">₹{active.price} • booked {active.booked_date}</span>
+              <span className="text-[10px] text-slate-400 mt-1">₹{active.price} • installed {active.installed_date || active.booked_date}</span>
             </div>
           ) : (
             <button type="button" onClick={() => setBookModalOpen(true)} className="glass-card p-5 flex flex-col justify-center items-center text-center relative overflow-hidden cursor-pointer group w-full">
@@ -128,7 +159,7 @@ export default function GasExpense() {
         </div>
       )}
 
-      {active && (
+      {active && !pending_order && (
         <div className="flex justify-end items-center gap-3 mb-6">
           {days_until_rebook > 0 ? (
             <span className="text-xs text-slate-400">Distributor rule: new booking available in {days_until_rebook} day{days_until_rebook > 1 ? 's' : ''}</span>
@@ -170,6 +201,8 @@ export default function GasExpense() {
                   <td data-label="Status" className="px-6 py-4 text-center">
                     {c.status === 'active' ? (
                       <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-600">Active</span>
+                    ) : c.status === 'ordered' ? (
+                      <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-sky-50 text-sky-600">Ordered</span>
                     ) : (
                       <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-slate-100 text-slate-500">Finished</span>
                     )}

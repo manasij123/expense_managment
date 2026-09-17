@@ -409,6 +409,16 @@ def get_active_gas_cylinder(user_id):
         return doc.to_dict(), doc.reference
     return None, None
 
+def get_pending_gas_order(user_id):
+    """Returns (data, doc_ref) for a cylinder that's been booked with the
+    distributor but not yet delivered/installed, or (None, None)."""
+    docs = db.collection('users').document(user_id).collection('gas_cylinders') \
+        .where('status', '==', 'ordered').limit(1).stream()
+    doc = next(docs, None)
+    if doc:
+        return doc.to_dict(), doc.reference
+    return None, None
+
 def get_last_gas_price(user_id):
     """Most recently used cylinder price, for pre-filling the booking form."""
     docs = db.collection('users').document(user_id).collection('gas_cylinders') \
@@ -419,10 +429,52 @@ def get_last_gas_price(user_id):
     return GAS_DEFAULT_PRICE
 
 def book_gas_cylinder(user_id, price):
-    """Closes out the current active cylinder (if any) as finished today, and
-    opens a new one — this is the single action for both 'book my very first
-    cylinder' and 'this one's finished, book the next one' since the user
-    always does both in the same breath."""
+    """Places an order for a new cylinder with the distributor. The cylinder
+    currently in use (if any) keeps being used exactly as before — it isn't
+    swapped out until install_gas_cylinder() confirms the new one has
+    actually arrived and been installed, which is often days after booking.
+    Only when there's no cylinder in use yet (the very first one) does the
+    new cylinder go active immediately, since there's nothing to wait on."""
+    today_str = get_ist_now().strftime('%Y-%m-%d')
+
+    active_data, active_ref = get_active_gas_cylinder(user_id)
+
+    if active_ref is None:
+        next_check = (get_ist_now() + timedelta(days=GAS_CHECK_IN_AFTER_DAYS)).strftime('%Y-%m-%d')
+        new_doc = {
+            'booked_date': today_str,
+            'installed_date': today_str,
+            'price': price,
+            'status': 'active',
+            'finished_date': None,
+            'next_check_date': next_check,
+            'last_notified_date': None,
+            'created_at': firestore.SERVER_TIMESTAMP,
+        }
+    else:
+        new_doc = {
+            'booked_date': today_str,
+            'installed_date': None,
+            'price': price,
+            'status': 'ordered',
+            'finished_date': None,
+            'next_check_date': None,
+            'last_notified_date': None,
+            'created_at': firestore.SERVER_TIMESTAMP,
+        }
+    db.collection('users').document(user_id).collection('gas_cylinders').add(new_doc)
+    return new_doc
+
+def install_gas_cylinder(user_id):
+    """Confirms the ordered cylinder has been delivered and swapped in for
+    the old one: the old active cylinder is finished off as of today (that's
+    when it actually stopped being used), and the ordered cylinder becomes
+    active, with its own ~40-day check-in clock starting from today, not
+    from whenever it was originally booked."""
+    pending_data, pending_ref = get_pending_gas_order(user_id)
+    if pending_ref is None:
+        return None
+
     today = get_ist_now()
     today_str = today.strftime('%Y-%m-%d')
 
@@ -431,17 +483,12 @@ def book_gas_cylinder(user_id, price):
         active_ref.update({'status': 'finished', 'finished_date': today_str})
 
     next_check = (today + timedelta(days=GAS_CHECK_IN_AFTER_DAYS)).strftime('%Y-%m-%d')
-    new_doc = {
-        'booked_date': today_str,
-        'price': price,
+    pending_ref.update({
         'status': 'active',
-        'finished_date': None,
+        'installed_date': today_str,
         'next_check_date': next_check,
-        'last_notified_date': None,
-        'created_at': firestore.SERVER_TIMESTAMP,
-    }
-    db.collection('users').document(user_id).collection('gas_cylinders').add(new_doc)
-    return new_doc
+    })
+    return today_str
 
 def snooze_gas_checkin(user_id):
     """User said the current cylinder hasn't run out yet — ask again in 5 days."""
