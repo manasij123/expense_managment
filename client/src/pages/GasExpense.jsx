@@ -241,6 +241,12 @@ function RecordTab({ active, pendingOrder, history, totalExpense, daysUntilReboo
               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Current Cylinder</p>
               <span className="text-emerald-600 font-bold text-lg">Day {daysSinceBooked}</span>
               <span className="text-[10px] text-slate-400 mt-1">₹{active.price} • {active.received ? 'received' : 'booked'} {active.received_date || active.booked_date}</span>
+              {!pendingOrder && (
+                <button onClick={onCodeClick} className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-600 hover:bg-rose-100 transition">
+                  <KeyRound className="w-3.5 h-3.5" />
+                  {active.delivery_code ? `Code: ${active.delivery_code}` : 'Add Delivery Code'}
+                </button>
+              )}
             </div>
           ) : (
             <button type="button" onClick={onBookClick} className="glass-card p-5 flex flex-col justify-center items-center text-center relative overflow-hidden cursor-pointer group w-full">
