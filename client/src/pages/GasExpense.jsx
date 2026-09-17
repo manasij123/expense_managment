@@ -312,6 +312,7 @@ function RecordTab({ active, pendingOrder, history, totalExpense, daysUntilReboo
             <thead>
               <tr className="text-xs text-slate-400 uppercase border-b border-slate-200/50">
                 <th className="px-6 py-3 font-semibold text-center">Booked On</th>
+                <th className="px-6 py-3 font-semibold text-center">Installed On</th>
                 <th className="px-6 py-3 font-semibold text-center">Price</th>
                 <th className="px-6 py-3 font-semibold text-center">Status</th>
                 <th className="px-6 py-3 font-semibold text-center">Code</th>
@@ -321,12 +322,15 @@ function RecordTab({ active, pendingOrder, history, totalExpense, daysUntilReboo
             <tbody className="text-sm divide-y divide-slate-100 sm:divide-y-0">
               {history.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-slate-400">No cylinders booked yet.</td>
+                  <td colSpan={6} className="px-6 py-8 text-center text-slate-400">No cylinders booked yet.</td>
                 </tr>
               )}
               {history.map((c) => (
                 <tr key={c.id} className="border-b border-slate-100/50 last:border-none hover:bg-white/40 transition">
                   <td className="px-6 py-4 font-medium text-slate-700 text-center">{c.booked_date}</td>
+                  <td data-label="Installed On" className="px-6 py-4 text-center text-slate-500">
+                    {c.received_date || (c.received ? c.booked_date : '-')}
+                  </td>
                   <td data-label="Price" className="px-6 py-4 text-center">₹{c.price}</td>
                   <td data-label="Status" className="px-6 py-4 text-center">
                     {c.status === 'active' ? (
