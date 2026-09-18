@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Flame, Banknote, CalendarClock, List, X, Check, HelpCircle, AlarmClock, PackageCheck, Receipt, KeyRound, Archive, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Flame, Banknote, CalendarClock, List, X, Check, HelpCircle, AlarmClock, PackageCheck, Receipt, KeyRound, Archive, AlertTriangle, Eye } from 'lucide-react';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import Layout from '../components/Layout';
 import { api } from '../api';
@@ -9,6 +9,15 @@ import { useFlash } from '../context/FlashContext';
 // Native-only bridge to the reliable exact-alarm engine — a web page alone
 // can't do this. No-op on the website.
 const AlarmSettings = registerPlugin('AlarmSettings');
+
+// "2026-09-18" -> "18-09-26" everywhere in this page.
+function fmtDate(d) {
+  if (!d) return '-';
+  const [y, m, day] = d.split('-');
+  return `${day}-${m}-${y.slice(2)}`;
+}
+
+const DELIVERY_CODE_PASSWORD = '08111999';
 
 // A cylinder's life has four stages: booked with the distributor
 // ('ordered'), delivered and sitting at home as a full spare but not
@@ -56,6 +65,7 @@ function buildCycleRows(history) {
       replacementDelivered: next?.received_date || null,
       replacementCode: next?.delivery_code || null,
       replacementPrice: next?.price || null,
+      replacementStatus: next?.status || null,
     });
   }
   return rows.reverse(); // most recent cycle first
@@ -318,6 +328,18 @@ export default function GasExpense() {
 }
 
 function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUntilRebook, daysSinceInstalled, isCheckDue, canBook, onBookClick, onCodeClick, onExistingClick }) {
+  const [revealedCodes, setRevealedCodes] = useState({});
+
+  function revealCode(id) {
+    const entered = window.prompt('Enter password to view this delivery code:');
+    if (entered === null) return;
+    if (entered === DELIVERY_CODE_PASSWORD) {
+      setRevealedCodes((prev) => ({ ...prev, [id]: true }));
+    } else {
+      window.alert('Wrong password.');
+    }
+  }
+
   return (
     <>
       {/* Stats Row */}
@@ -338,7 +360,7 @@ function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUn
               </div>
               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Current Cylinder</p>
               <span className="text-emerald-600 font-bold text-lg">Day {daysSinceInstalled}</span>
-              <span className="text-[10px] text-slate-400 mt-1">₹{active.price} • installed {active.installed_date}</span>
+              <span className="text-[10px] text-slate-400 mt-1">₹{active.price} • installed {fmtDate(active.installed_date)}</span>
             </div>
           ) : stored ? (
             <div className="glass-card p-5 flex flex-col justify-center items-center text-center relative overflow-hidden">
@@ -347,7 +369,7 @@ function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUn
               </div>
               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Current Cylinder</p>
               <span className="text-indigo-600 font-bold text-lg">Spare not connected</span>
-              <span className="text-[10px] text-slate-400 mt-1">₹{stored.price} • delivered {stored.received_date}</span>
+              <span className="text-[10px] text-slate-400 mt-1">₹{stored.price} • delivered {fmtDate(stored.received_date)}</span>
             </div>
           ) : (
             <div className="glass-card p-5 flex flex-col justify-center items-center text-center relative overflow-hidden">
@@ -377,7 +399,7 @@ function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUn
       {pendingOrder && (
         <div className="glass-card p-4 mb-8 flex items-center justify-between gap-3 border-2 border-indigo-200 bg-indigo-50/60">
           <div>
-            <p className="text-sm font-semibold text-slate-700">New cylinder booked on {pendingOrder.booked_date} for ₹{pendingOrder.price} — waiting for delivery.</p>
+            <p className="text-sm font-semibold text-slate-700">New cylinder booked on {fmtDate(pendingOrder.booked_date)} for ₹{pendingOrder.price} — waiting for delivery.</p>
             <p className="text-xs text-slate-500 mt-0.5">Becomes your spare once delivered; whatever's in use keeps running untouched.</p>
           </div>
           <button onClick={onCodeClick} className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-indigo-600 hover:bg-indigo-100 transition">
@@ -390,14 +412,14 @@ function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUn
       {stored && active && (
         <div className="glass-card p-4 mb-8 flex items-center gap-3 border-2 border-indigo-100 bg-indigo-50/40">
           <Archive className="w-5 h-5 text-indigo-400 flex-shrink-0" />
-          <p className="text-sm text-slate-600">Spare in stock — delivered {stored.received_date} for ₹{stored.price}. Ready to install once the current one runs out.</p>
+          <p className="text-sm text-slate-600">Spare in stock — delivered {fmtDate(stored.received_date)} for ₹{stored.price}. Ready to install once the current one runs out.</p>
         </div>
       )}
 
       {active && !isCheckDue && (
         <div className="glass-card p-4 mb-8 flex items-center gap-3">
           <CalendarClock className="w-5 h-5 text-slate-400 flex-shrink-0" />
-          <p className="text-sm text-slate-500">Next check-in around <span className="font-semibold text-slate-700">{active.next_check_date}</span>.</p>
+          <p className="text-sm text-slate-500">Next check-in around <span className="font-semibold text-slate-700">{fmtDate(active.next_check_date)}</span>.</p>
         </div>
       )}
 
@@ -428,13 +450,13 @@ function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUn
               <table className="w-full text-left border-collapse responsive-table">
                 <thead>
                   <tr className="text-xs text-slate-400 uppercase border-b border-slate-200/50">
-                    <th className="px-6 py-3 font-semibold text-center">Installed On</th>
+                    <th className="px-6 py-3 font-semibold text-center">Installed</th>
                     <th className="px-6 py-3 font-semibold text-center">Price</th>
                     <th className="px-6 py-3 font-semibold text-center">Status</th>
                     <th className="px-6 py-3 font-semibold text-center">Lasted</th>
-                    <th className="px-6 py-3 font-semibold text-center">Replacement Booked</th>
-                    <th className="px-6 py-3 font-semibold text-center">Replacement Delivered</th>
-                    <th className="px-6 py-3 font-semibold text-center">Replacement Code</th>
+                    <th className="px-6 py-3 font-semibold text-center">New Booked</th>
+                    <th className="px-6 py-3 font-semibold text-center">Delivered</th>
+                    <th className="px-6 py-3 font-semibold text-center">Code</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm divide-y divide-slate-100 sm:divide-y-0">
@@ -443,31 +465,50 @@ function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUn
                       <td colSpan={7} className="px-6 py-8 text-center text-slate-400">No cylinders installed yet.</td>
                     </tr>
                   )}
-                  {cycleRows.map((r) => (
-                    <tr key={r.id} className="border-b border-slate-100/50 last:border-none hover:bg-white/40 transition">
-                      <td className="px-6 py-4 font-medium text-slate-700 text-center">{r.installedDate}</td>
-                      <td data-label="Price" className="px-6 py-4 text-center">₹{r.price}</td>
-                      <td data-label="Status" className="px-6 py-4 text-center">
-                        {r.status === 'active' ? (
-                          <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-600">Active</span>
-                        ) : (
-                          <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-slate-100 text-slate-500">Finished</span>
-                        )}
-                      </td>
-                      <td data-label="Lasted" className="px-6 py-4 text-center text-slate-500">
-                        {r.daysLasted != null ? `${r.daysLasted} days` : '-'}
-                      </td>
-                      <td data-label="Replacement Booked" className="px-6 py-4 text-center text-slate-500">
-                        {r.replacementBooked || '-'}
-                      </td>
-                      <td data-label="Replacement Delivered" className="px-6 py-4 text-center text-slate-500">
-                        {r.replacementDelivered || '-'}
-                      </td>
-                      <td data-label="Replacement Code" className="px-6 py-4 text-center text-slate-500 font-mono">
-                        {r.replacementCode || '-'}
-                      </td>
-                    </tr>
-                  ))}
+                  {cycleRows.map((r) => {
+                    // The code is only shown in the clear while it's still
+                    // just ordered (you need it to tell the delivery person)
+                    // — once that cylinder's actually been delivered, it's
+                    // stale, so mask it behind a password to glance at.
+                    const codeIsLive = r.replacementStatus === 'ordered';
+                    const revealed = revealedCodes[r.id];
+                    return (
+                      <tr key={r.id} className="border-b border-slate-100/50 last:border-none hover:bg-white/40 transition">
+                        <td className="px-6 py-4 font-medium text-slate-700 text-center">{fmtDate(r.installedDate)}</td>
+                        <td data-label="Price" className="px-6 py-4 text-center">₹{r.price}</td>
+                        <td data-label="Status" className="px-6 py-4 text-center">
+                          {r.status === 'active' ? (
+                            <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-600">ON</span>
+                          ) : (
+                            <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-slate-100 text-slate-500">Finished</span>
+                          )}
+                        </td>
+                        <td data-label="Lasted" className="px-6 py-4 text-center text-slate-500">
+                          {r.daysLasted != null ? `${r.daysLasted} days` : '-'}
+                        </td>
+                        <td data-label="New Booked" className="px-6 py-4 text-center text-slate-500">
+                          {fmtDate(r.replacementBooked)}
+                        </td>
+                        <td data-label="Delivered" className="px-6 py-4 text-center text-slate-500">
+                          {fmtDate(r.replacementDelivered)}
+                        </td>
+                        <td data-label="Code" className="px-6 py-4 text-center text-slate-500 font-mono">
+                          {!r.replacementCode ? (
+                            '-'
+                          ) : codeIsLive || revealed ? (
+                            r.replacementCode
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5">
+                              ****
+                              <button onClick={() => revealCode(r.id)} className="text-slate-400 hover:text-slate-600" title="Reveal code">
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -505,7 +546,7 @@ function AlarmingTab({ active, pendingOrder, stored, stage, daysSinceInstalled, 
             <div className="flex-1">
               <h3 className="font-bold text-slate-800 mb-1">Has the new cylinder arrived?</h3>
               <p className="text-sm text-slate-500 mb-4">
-                Booked on {pendingOrder.booked_date} — usually arrives within 5 days (longer during a supply crisis).
+                Booked on {fmtDate(pendingOrder.booked_date)} — usually arrives within 5 days (longer during a supply crisis).
                 {active && ' The one currently in use keeps running until you install this later.'}
               </p>
               <div className="flex flex-wrap gap-3">
@@ -530,7 +571,7 @@ function AlarmingTab({ active, pendingOrder, stored, stage, daysSinceInstalled, 
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-slate-800 mb-1">Spare cylinder in stock, nothing connected</h3>
-              <p className="text-sm text-slate-500 mb-4">Delivered {stored.received_date} for ₹{stored.price} — connect it now to start using it.</p>
+              <p className="text-sm text-slate-500 mb-4">Delivered {fmtDate(stored.received_date)} for ₹{stored.price} — connect it now to start using it.</p>
               <button onClick={onInstall} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
                 Connect It Now
               </button>
@@ -547,7 +588,7 @@ function AlarmingTab({ active, pendingOrder, stored, stage, daysSinceInstalled, 
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-slate-800 mb-1">Has this month's gas cylinder run out?</h3>
-              <p className="text-sm text-slate-500 mb-4">Installed on {active.installed_date} — it's been {daysSinceInstalled} days. A spare is in stock, ready to swap in.</p>
+              <p className="text-sm text-slate-500 mb-4">Installed on {fmtDate(active.installed_date)} — it's been {daysSinceInstalled} days. A spare is in stock, ready to swap in.</p>
               <div className="flex flex-wrap gap-3">
                 <button onClick={onSnooze} className="glass-btn-secondary px-5 py-2.5 rounded-xl font-semibold text-sm">
                   Not Yet
@@ -569,7 +610,7 @@ function AlarmingTab({ active, pendingOrder, stored, stage, daysSinceInstalled, 
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-slate-800 mb-1">This one may be running out — and you have no spare!</h3>
-              <p className="text-sm text-slate-500 mb-4">Installed on {active.installed_date} — it's been {daysSinceInstalled} days. There's no spare in stock, so book one now before it actually runs out.</p>
+              <p className="text-sm text-slate-500 mb-4">Installed on {fmtDate(active.installed_date)} — it's been {daysSinceInstalled} days. There's no spare in stock, so book one now before it actually runs out.</p>
               <div className="flex flex-wrap gap-3">
                 <button onClick={onSnooze} className="glass-btn-secondary px-5 py-2.5 rounded-xl font-semibold text-sm">
                   Not Yet
@@ -590,7 +631,7 @@ function AlarmingTab({ active, pendingOrder, stored, stage, daysSinceInstalled, 
           </div>
           <div className="flex-1">
             <h3 className="font-bold text-slate-800">All set</h3>
-            <p className="text-sm text-slate-500">Day {daysSinceInstalled} on the current cylinder. Next check-in around <span className="font-semibold text-slate-700">{active.next_check_date}</span>.</p>
+            <p className="text-sm text-slate-500">Day {daysSinceInstalled} on the current cylinder. Next check-in around <span className="font-semibold text-slate-700">{fmtDate(active.next_check_date)}</span>.</p>
             {stored ? (
               <p className="text-xs text-emerald-600 mt-1">Spare already in stock — nothing to do.</p>
             ) : canBook ? (
