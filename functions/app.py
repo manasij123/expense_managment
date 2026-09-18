@@ -523,6 +523,26 @@ def install_stored_gas_cylinder(user_id):
     stored_ref.update({'status': 'active', 'installed_date': today_str, 'next_check_date': next_check})
     return True
 
+def finish_active_gas_cylinder(user_id):
+    """The active cylinder has run out, confirmed directly (not via the
+    check-in reminder). Marks it finished; if a spare is already stored,
+    promotes it to active in the same step, starting its own ~40-day
+    check-in clock from now — otherwise there's simply no active cylinder
+    until the next one is booked and installed."""
+    active_data, active_ref = get_active_gas_cylinder(user_id)
+    if active_ref is None:
+        return False
+
+    today = get_ist_now()
+    today_str = today.strftime('%Y-%m-%d')
+    active_ref.update({'status': 'finished', 'finished_date': today_str})
+
+    stored_data, stored_ref = get_stored_gas_cylinder(user_id)
+    if stored_ref:
+        next_check = (today + timedelta(days=GAS_CHECK_IN_AFTER_DAYS)).strftime('%Y-%m-%d')
+        stored_ref.update({'status': 'active', 'installed_date': today_str, 'next_check_date': next_check})
+    return True
+
 def snooze_gas_checkin(user_id):
     """User said the current cylinder hasn't run out yet — ask again in 5 days."""
     active_data, active_ref = get_active_gas_cylinder(user_id)

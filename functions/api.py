@@ -695,6 +695,15 @@ def api_gas_install():
     return jsonify({'status': 'success'})
 
 
+@api_bp.route('/gas/finish', methods=['POST'])
+@login_required
+def api_gas_finish():
+    ok = core.finish_active_gas_cylinder(current_user.id)
+    if not ok:
+        return jsonify({'status': 'error', 'message': 'No active cylinder to finish.'}), 400
+    return jsonify({'status': 'success'})
+
+
 @api_bp.route('/gas/set_code', methods=['POST'])
 @login_required
 def api_gas_set_code():
