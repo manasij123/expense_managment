@@ -486,12 +486,13 @@ function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUn
                     <th className="px-6 py-3 font-semibold text-center">New Booked</th>
                     <th className="px-6 py-3 font-semibold text-center">Delivered</th>
                     <th className="px-6 py-3 font-semibold text-center">Code</th>
+                    <th className="px-6 py-3 font-semibold text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm divide-y divide-slate-100 sm:divide-y-0">
                   {cycleRows.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="px-6 py-8 text-center text-slate-400">No cylinders installed yet.</td>
+                      <td colSpan={8} className="px-6 py-8 text-center text-slate-400">No cylinders installed yet.</td>
                     </tr>
                   )}
                   {cycleRows.map((r) => {
@@ -507,12 +508,7 @@ function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUn
                         <td data-label="Price" className="px-6 py-4 text-center">₹{r.price}</td>
                         <td data-label="Status" className="px-6 py-4 text-center">
                           {r.status === 'active' ? (
-                            <div className="flex items-center justify-center gap-2">
-                              <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-600">ON</span>
-                              <button onClick={onFinish} className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-red-600 text-white hover:bg-red-700 transition">
-                                Finish
-                              </button>
-                            </div>
+                            <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-600">ON</span>
                           ) : (
                             <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-slate-100 text-slate-500">Finished</span>
                           )}
@@ -544,6 +540,15 @@ function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUn
                                 <Eye className="w-3.5 h-3.5" />
                               </button>
                             </span>
+                          )}
+                        </td>
+                        <td data-label="Action" className="px-6 py-4 text-center">
+                          {r.status === 'active' ? (
+                            <button onClick={onFinish} className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide bg-red-600 text-white hover:bg-red-700 transition">
+                              Finish
+                            </button>
+                          ) : (
+                            '-'
                           )}
                         </td>
                       </tr>
