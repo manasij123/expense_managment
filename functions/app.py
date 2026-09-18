@@ -467,20 +467,19 @@ def book_gas_cylinder(user_id, price):
     db.collection('users').document(user_id).collection('gas_cylinders').add(new_doc)
     return new_doc
 
-def add_existing_active_gas_cylinder(user_id, price, booked_date, received_date, installed_date):
+def add_existing_active_gas_cylinder(user_id, price, installed_date):
     """Registers a cylinder that was already connected and in use before the
     user started tracking it in this app — most people have gas running
-    already when they first open this page, they didn't just book it
-    through here. Skips the ordered -> stored pipeline entirely and goes
-    straight to active. The three dates can genuinely differ (booked one
-    day, delivered the next, installed later still, once the previous
-    cylinder actually ran out) — the check-in clock starts from
-    installed_date, not from today or from booked_date."""
+    already when they first open this page, they didn't book or track its
+    delivery through here at all, so there's no real booked/delivered date
+    to record. Skips the ordered -> stored pipeline entirely and goes
+    straight to active, with the check-in clock starting from the given
+    installed date."""
     installed_dt = datetime.strptime(installed_date, '%Y-%m-%d')
     next_check = (installed_dt + timedelta(days=GAS_CHECK_IN_AFTER_DAYS)).strftime('%Y-%m-%d')
     new_doc = {
-        'booked_date': booked_date,
-        'received_date': received_date,
+        'booked_date': None,
+        'received_date': None,
         'installed_date': installed_date,
         'price': price,
         'status': 'active',

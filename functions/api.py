@@ -555,9 +555,10 @@ def api_gas():
     days_until_rebook = 0
     if not pending_order and not stored:
         last_cylinder = core.get_last_gas_cylinder(current_user.id)
-        if last_cylinder:
+        reference_date = last_cylinder and (last_cylinder.get('booked_date') or last_cylinder.get('installed_date'))
+        if reference_date:
             today_dt = core.datetime.strptime(today_str, '%Y-%m-%d')
-            booked_dt = core.datetime.strptime(last_cylinder['booked_date'], '%Y-%m-%d')
+            booked_dt = core.datetime.strptime(reference_date, '%Y-%m-%d')
             days_since = (today_dt - booked_dt).days
             days_until_rebook = max(0, core.GAS_MIN_REBOOK_DAYS - days_since)
 
@@ -612,9 +613,10 @@ def api_gas_book():
         return jsonify({'status': 'error', 'message': 'You already have a cylinder booked or in stock as a spare.'}), 400
 
     last_cylinder = core.get_last_gas_cylinder(current_user.id)
-    if last_cylinder:
+    reference_date = last_cylinder and (last_cylinder.get('booked_date') or last_cylinder.get('installed_date'))
+    if reference_date:
         today_dt = core.datetime.strptime(core.get_ist_now().strftime('%Y-%m-%d'), '%Y-%m-%d')
-        booked_dt = core.datetime.strptime(last_cylinder['booked_date'], '%Y-%m-%d')
+        booked_dt = core.datetime.strptime(reference_date, '%Y-%m-%d')
         days_since = (today_dt - booked_dt).days
         if days_since < core.GAS_MIN_REBOOK_DAYS:
             remaining = core.GAS_MIN_REBOOK_DAYS - days_since
@@ -642,22 +644,13 @@ def api_gas_add_existing():
     if price <= 0:
         return jsonify({'status': 'error', 'message': 'Price must be greater than 0.'}), 400
 
-    def parse_date(key):
-        raw = (data.get(key) or '').strip()
-        try:
-            return core.datetime.strptime(raw, '%Y-%m-%d')
-        except ValueError:
-            return None
-
-    booked_dt = parse_date('booked_date')
-    received_dt = parse_date('received_date')
-    installed_dt = parse_date('installed_date')
-    if not booked_dt or not received_dt or not installed_dt:
-        return jsonify({'status': 'error', 'message': 'Please enter valid booked, delivered, and installed dates.'}), 400
-    if installed_dt.date() > core.get_ist_now().date():
+    installed_date = (data.get('installed_date') or '').strip()
+    try:
+        parsed = core.datetime.strptime(installed_date, '%Y-%m-%d')
+    except ValueError:
+        return jsonify({'status': 'error', 'message': 'Please enter a valid installed date.'}), 400
+    if parsed.date() > core.get_ist_now().date():
         return jsonify({'status': 'error', 'message': 'Installed date cannot be in the future.'}), 400
-    if not (booked_dt.date() <= received_dt.date() <= installed_dt.date()):
-        return jsonify({'status': 'error', 'message': 'Dates must be in order: booked, then delivered, then installed.'}), 400
 
     active, _ = core.get_active_gas_cylinder(current_user.id)
     pending_order, _ = core.get_pending_gas_order(current_user.id)
@@ -665,10 +658,7 @@ def api_gas_add_existing():
     if active or pending_order or stored:
         return jsonify({'status': 'error', 'message': 'You already have a cylinder being tracked.'}), 400
 
-    core.add_existing_active_gas_cylinder(
-        current_user.id, price,
-        booked_dt.strftime('%Y-%m-%d'), received_dt.strftime('%Y-%m-%d'), installed_dt.strftime('%Y-%m-%d'),
-    )
+    core.add_existing_active_gas_cylinder(current_user.id, price, installed_date)
     return jsonify({'status': 'success'})
 
 
