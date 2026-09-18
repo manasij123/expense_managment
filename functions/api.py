@@ -566,8 +566,11 @@ def api_gas():
             days_since = (today_dt - booked_dt).days
             days_until_rebook = max(0, core.GAS_MIN_REBOOK_DAYS - days_since)
 
+    # Ordered by created_at (always set), not booked_date — a self-declared
+    # "already installed" cylinder has no real booked_date (it's null), and
+    # Firestore can drop such docs from an order_by on that field entirely.
     docs = core.db.collection('users').document(current_user.id).collection('gas_cylinders') \
-        .order_by('booked_date', direction=firestore.Query.DESCENDING).stream()
+        .order_by('created_at', direction=firestore.Query.DESCENDING).stream()
     history = []
     total_expense = 0
     for doc in docs:
