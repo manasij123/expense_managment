@@ -25,6 +25,42 @@ function gasStage(active, pendingOrder, stored, isCheckDue) {
   return 'ok';
 }
 
+// The history list from the API has one entry per physical cylinder. For
+// display, group by "cycle" instead: one row per cylinder that was ever
+// actually installed, with whichever cylinder was booked to replace it
+// shown as columns on that same row (booked/delivered/code) until that
+// replacement is itself installed — at which point it graduates into its
+// own row, and whatever replaces *it* takes over those columns. At most
+// one cylinder is ever "ordered" or "stored" at a time, so the booking
+// sequence itself (sorted oldest to newest) already gives the right
+// pairing — no explicit "replaces" link needs to be stored.
+function buildCycleRows(history) {
+  const chrono = [...history].sort((a, b) => {
+    const da = a.booked_date || a.installed_date || '';
+    const db = b.booked_date || b.installed_date || '';
+    return da.localeCompare(db);
+  });
+
+  const rows = [];
+  for (let i = 0; i < chrono.length; i++) {
+    const c = chrono[i];
+    if (!c.installed_date) continue; // not installed (yet) — it's someone else's "replacement" columns
+    const next = chrono[i + 1] || null;
+    rows.push({
+      id: c.id,
+      installedDate: c.installed_date,
+      price: c.price,
+      status: c.status,
+      daysLasted: c.days_lasted,
+      replacementBooked: next?.booked_date || null,
+      replacementDelivered: next?.received_date || null,
+      replacementCode: next?.delivery_code || null,
+      replacementPrice: next?.price || null,
+    });
+  }
+  return rows.reverse(); // most recent cycle first
+}
+
 export default function GasExpense() {
   const showFlash = useFlash();
   const [data, setData] = useState(null);
@@ -377,61 +413,67 @@ function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUn
         </div>
       )}
 
-      {/* History Table */}
-      <div className="glass-card overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200/50 bg-white/30 flex justify-between items-center">
-          <h3 className="font-bold text-slate-600 text-sm uppercase tracking-wide">Cylinder History</h3>
-          <span className="text-xs font-medium text-slate-500 bg-white/60 px-2 py-1 rounded border border-slate-200">{history.length} Rows</span>
-        </div>
+      {/* History Table — one row per install cycle: the cylinder that was
+          installed, plus whichever cylinder is/was queued up to replace it */}
+      {(() => {
+        const cycleRows = buildCycleRows(history);
+        return (
+          <div className="glass-card overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-200/50 bg-white/30 flex justify-between items-center">
+              <h3 className="font-bold text-slate-600 text-sm uppercase tracking-wide">Cylinder History</h3>
+              <span className="text-xs font-medium text-slate-500 bg-white/60 px-2 py-1 rounded border border-slate-200">{cycleRows.length} Rows</span>
+            </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse responsive-table">
-            <thead>
-              <tr className="text-xs text-slate-400 uppercase border-b border-slate-200/50">
-                <th className="px-6 py-3 font-semibold text-center">Booked On</th>
-                <th className="px-6 py-3 font-semibold text-center">Delivered On</th>
-                <th className="px-6 py-3 font-semibold text-center">Installed On</th>
-                <th className="px-6 py-3 font-semibold text-center">Price</th>
-                <th className="px-6 py-3 font-semibold text-center">Status</th>
-                <th className="px-6 py-3 font-semibold text-center">Code</th>
-                <th className="px-6 py-3 font-semibold text-center">Lasted</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm divide-y divide-slate-100 sm:divide-y-0">
-              {history.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-slate-400">No cylinders booked yet.</td>
-                </tr>
-              )}
-              {history.map((c) => (
-                <tr key={c.id} className="border-b border-slate-100/50 last:border-none hover:bg-white/40 transition">
-                  <td className="px-6 py-4 font-medium text-slate-700 text-center">{c.booked_date || '-'}</td>
-                  <td data-label="Delivered On" className="px-6 py-4 text-center text-slate-500">{c.received_date || '-'}</td>
-                  <td data-label="Installed On" className="px-6 py-4 text-center text-slate-500">{c.installed_date || '-'}</td>
-                  <td data-label="Price" className="px-6 py-4 text-center">₹{c.price}</td>
-                  <td data-label="Status" className="px-6 py-4 text-center">
-                    {c.status === 'active' ? (
-                      <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-600">Active</span>
-                    ) : c.status === 'stored' ? (
-                      <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-violet-50 text-violet-600">Stored</span>
-                    ) : c.status === 'ordered' ? (
-                      <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-indigo-50 text-indigo-600">Ordered</span>
-                    ) : (
-                      <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-slate-100 text-slate-500">Finished</span>
-                    )}
-                  </td>
-                  <td data-label="Code" className="px-6 py-4 text-center text-slate-500 font-mono">
-                    {c.delivery_code || '-'}
-                  </td>
-                  <td data-label="Lasted" className="px-6 py-4 text-center text-slate-500">
-                    {c.days_lasted != null ? `${c.days_lasted} days` : '-'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse responsive-table">
+                <thead>
+                  <tr className="text-xs text-slate-400 uppercase border-b border-slate-200/50">
+                    <th className="px-6 py-3 font-semibold text-center">Installed On</th>
+                    <th className="px-6 py-3 font-semibold text-center">Price</th>
+                    <th className="px-6 py-3 font-semibold text-center">Status</th>
+                    <th className="px-6 py-3 font-semibold text-center">Lasted</th>
+                    <th className="px-6 py-3 font-semibold text-center">Replacement Booked</th>
+                    <th className="px-6 py-3 font-semibold text-center">Replacement Delivered</th>
+                    <th className="px-6 py-3 font-semibold text-center">Replacement Code</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm divide-y divide-slate-100 sm:divide-y-0">
+                  {cycleRows.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-8 text-center text-slate-400">No cylinders installed yet.</td>
+                    </tr>
+                  )}
+                  {cycleRows.map((r) => (
+                    <tr key={r.id} className="border-b border-slate-100/50 last:border-none hover:bg-white/40 transition">
+                      <td className="px-6 py-4 font-medium text-slate-700 text-center">{r.installedDate}</td>
+                      <td data-label="Price" className="px-6 py-4 text-center">₹{r.price}</td>
+                      <td data-label="Status" className="px-6 py-4 text-center">
+                        {r.status === 'active' ? (
+                          <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-600">Active</span>
+                        ) : (
+                          <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-slate-100 text-slate-500">Finished</span>
+                        )}
+                      </td>
+                      <td data-label="Lasted" className="px-6 py-4 text-center text-slate-500">
+                        {r.daysLasted != null ? `${r.daysLasted} days` : '-'}
+                      </td>
+                      <td data-label="Replacement Booked" className="px-6 py-4 text-center text-slate-500">
+                        {r.replacementBooked || '-'}
+                      </td>
+                      <td data-label="Replacement Delivered" className="px-6 py-4 text-center text-slate-500">
+                        {r.replacementDelivered || '-'}
+                      </td>
+                      <td data-label="Replacement Code" className="px-6 py-4 text-center text-slate-500 font-mono">
+                        {r.replacementCode || '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
     </>
   );
 }
