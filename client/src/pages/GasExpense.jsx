@@ -35,7 +35,9 @@ export default function GasExpense() {
   const [code, setCode] = useState('');
   const [existingModalOpen, setExistingModalOpen] = useState(false);
   const [existingPrice, setExistingPrice] = useState('');
-  const [existingDate, setExistingDate] = useState('');
+  const [existingBookedDate, setExistingBookedDate] = useState('');
+  const [existingReceivedDate, setExistingReceivedDate] = useState('');
+  const [existingInstalledDate, setExistingInstalledDate] = useState('');
 
   function load() {
     api.get('/api/gas').then((res) => {
@@ -101,15 +103,23 @@ export default function GasExpense() {
   }
 
   function openExistingModal() {
+    const today = new Date().toISOString().slice(0, 10);
     setExistingPrice(String(data.default_price));
-    setExistingDate(new Date().toISOString().slice(0, 10));
+    setExistingBookedDate(today);
+    setExistingReceivedDate(today);
+    setExistingInstalledDate(today);
     setExistingModalOpen(true);
   }
 
   async function handleAddExisting(e) {
     e.preventDefault();
     try {
-      await api.post('/api/gas/add_existing', { price: Number(existingPrice), installed_date: existingDate });
+      await api.post('/api/gas/add_existing', {
+        price: Number(existingPrice),
+        booked_date: existingBookedDate,
+        received_date: existingReceivedDate,
+        installed_date: existingInstalledDate,
+      });
       showFlash('Cylinder added!');
       setExistingModalOpen(false);
       load();
@@ -262,10 +272,18 @@ export default function GasExpense() {
                 <label className="block text-gray-600 text-sm font-medium mb-2">Cylinder Price (₹)</label>
                 <input type="number" min={1} value={existingPrice} onChange={(e) => setExistingPrice(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
               </div>
+              <div className="mb-4">
+                <label className="block text-gray-600 text-sm font-medium mb-2">Booked On</label>
+                <input type="date" max={new Date().toISOString().slice(0, 10)} value={existingBookedDate} onChange={(e) => setExistingBookedDate(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-600 text-sm font-medium mb-2">Delivered On</label>
+                <input type="date" max={new Date().toISOString().slice(0, 10)} value={existingReceivedDate} onChange={(e) => setExistingReceivedDate(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
+              </div>
               <div className="mb-6">
                 <label className="block text-gray-600 text-sm font-medium mb-2">Installed On</label>
-                <input type="date" max={new Date().toISOString().slice(0, 10)} value={existingDate} onChange={(e) => setExistingDate(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
-                <p className="text-xs text-slate-400 mt-2">Whenever this cylinder was actually connected — the ~40-day check-in clock starts counting from this date.</p>
+                <input type="date" max={new Date().toISOString().slice(0, 10)} value={existingInstalledDate} onChange={(e) => setExistingInstalledDate(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
+                <p className="text-xs text-slate-400 mt-2">These three can be different days (booked, then delivered, then installed) — the ~40-day check-in clock starts counting from Installed On.</p>
               </div>
               <button type="submit" className="w-full py-3.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center">
                 <Check className="w-5 h-5 mr-2" /> Add Cylinder
