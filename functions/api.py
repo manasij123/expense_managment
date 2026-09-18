@@ -555,7 +555,11 @@ def api_gas():
     days_until_rebook = 0
     if not pending_order and not stored:
         last_cylinder = core.get_last_gas_cylinder(current_user.id)
-        reference_date = last_cylinder and (last_cylinder.get('booked_date') or last_cylinder.get('installed_date'))
+        # A self-declared "already installed" cylinder has no real
+        # booked_date (it was never actually ordered through the app) — the
+        # distributor's rebooking cooldown only makes sense against a real
+        # past order, so skip it entirely rather than faking one.
+        reference_date = last_cylinder and last_cylinder.get('booked_date')
         if reference_date:
             today_dt = core.datetime.strptime(today_str, '%Y-%m-%d')
             booked_dt = core.datetime.strptime(reference_date, '%Y-%m-%d')
@@ -613,7 +617,9 @@ def api_gas_book():
         return jsonify({'status': 'error', 'message': 'You already have a cylinder booked or in stock as a spare.'}), 400
 
     last_cylinder = core.get_last_gas_cylinder(current_user.id)
-    reference_date = last_cylinder and (last_cylinder.get('booked_date') or last_cylinder.get('installed_date'))
+    # Same reasoning as in api_gas(): no real booked_date means it was never
+    # actually ordered through the app, so there's no cooldown to enforce.
+    reference_date = last_cylinder and last_cylinder.get('booked_date')
     if reference_date:
         today_dt = core.datetime.strptime(core.get_ist_now().strftime('%Y-%m-%d'), '%Y-%m-%d')
         booked_dt = core.datetime.strptime(reference_date, '%Y-%m-%d')
