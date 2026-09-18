@@ -216,6 +216,7 @@ export default function GasExpense() {
           daysSinceInstalled={daysSinceInstalled}
           isCheckDue={is_check_due}
           canBook={canBook}
+          onInstall={handleInstall}
           onBookClick={() => setBookModalOpen(true)}
           onCodeClick={openCodeModal}
           onExistingClick={openExistingModal}
@@ -338,7 +339,7 @@ export default function GasExpense() {
   );
 }
 
-function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUntilRebook, daysSinceInstalled, isCheckDue, canBook, onBookClick, onCodeClick, onExistingClick }) {
+function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUntilRebook, daysSinceInstalled, isCheckDue, canBook, onInstall, onBookClick, onCodeClick, onExistingClick }) {
   const [revealedCodes, setRevealedCodes] = useState({});
 
   function revealCode(id) {
@@ -421,9 +422,14 @@ function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUn
       )}
 
       {stored && active && (
-        <div className="glass-card p-4 mb-8 flex items-center gap-3 border-2 border-indigo-100 bg-indigo-50/40">
-          <Archive className="w-5 h-5 text-indigo-400 flex-shrink-0" />
-          <p className="text-sm text-slate-600">Spare in stock — delivered {fmtDate(stored.received_date)} for ₹{stored.price}. Ready to install once the current one runs out.</p>
+        <div className="glass-card p-4 mb-8 flex items-center justify-between gap-3 border-2 border-indigo-100 bg-indigo-50/40">
+          <div className="flex items-center gap-3">
+            <Archive className="w-5 h-5 text-indigo-400 flex-shrink-0" />
+            <p className="text-sm text-slate-600">Spare in stock — delivered {fmtDate(stored.received_date)} for ₹{stored.price}. Install it whenever the current one runs out.</p>
+          </div>
+          <button onClick={onInstall} className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition">
+            Install Now
+          </button>
         </div>
       )}
 
@@ -650,7 +656,12 @@ function AlarmingTab({ active, pendingOrder, stored, stage, daysSinceInstalled, 
             <h3 className="font-bold text-slate-800">All set</h3>
             <p className="text-sm text-slate-500">Day {daysSinceInstalled} on the current cylinder. Next check-in around <span className="font-semibold text-slate-700">{fmtDate(active.next_check_date)}</span>.</p>
             {stored ? (
-              <p className="text-xs text-emerald-600 mt-1">Spare already in stock — nothing to do.</p>
+              <div className="flex items-center justify-between gap-3 mt-2">
+                <p className="text-xs text-emerald-600">Spare already in stock.</p>
+                <button onClick={onInstall} className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition">
+                  Install It Now
+                </button>
+              </div>
             ) : canBook ? (
               <p className="text-xs text-slate-400 mt-1">No spare booked yet — <button onClick={onBookClick} className="underline hover:text-slate-600">book one anytime</button> before this runs out.</p>
             ) : null}
