@@ -19,6 +19,15 @@ function fmtDate(d) {
 
 const DELIVERY_CODE_PASSWORD = '08111999';
 
+// Days between a "YYYY-MM-DD" date and now, live (grows by 1 each day).
+// Appending a local midnight time avoids the date parsing as UTC midnight
+// (5:30am IST), which would otherwise show a wrong/negative count in the
+// early-morning hours right after that date.
+function daysSince(dateStr) {
+  if (!dateStr) return null;
+  return Math.max(0, Math.floor((new Date() - new Date(`${dateStr}T00:00:00`)) / (1000 * 60 * 60 * 24)));
+}
+
 // A cylinder's life has four stages: booked with the distributor
 // ('ordered'), delivered and sitting at home as a full spare but not
 // connected ('stored'), actually connected and in use ('active'), and
@@ -60,7 +69,11 @@ function buildCycleRows(history) {
       installedDate: c.installed_date,
       price: c.price,
       status: c.status,
-      daysLasted: c.days_lasted,
+      // Finished cylinders have a fixed total from the API; a still-active
+      // one hasn't finished lasting yet, so count live instead of showing
+      // a blank until it does.
+      daysLasted: c.status === 'active' ? daysSince(c.installed_date) : c.days_lasted,
+      daysLastedIsLive: c.status === 'active',
       replacementBooked: next?.booked_date || null,
       replacementDelivered: next?.received_date || null,
       replacementCode: next?.delivery_code || null,
@@ -188,9 +201,7 @@ export default function GasExpense() {
   // hours before that, "now" would come out earlier than the parsed
   // instant and the day count would go negative. Appending a local
   // midnight time parses it in the device's own timezone instead.
-  const daysSinceInstalled = active
-    ? Math.max(0, Math.floor((new Date() - new Date(`${active.installed_date}T00:00:00`)) / (1000 * 60 * 60 * 24)))
-    : null;
+  const daysSinceInstalled = active ? daysSince(active.installed_date) : null;
 
   return (
     <Layout headerContent={<HeaderTitle />}>
@@ -484,7 +495,13 @@ function RecordTab({ active, pendingOrder, stored, history, totalExpense, daysUn
                           )}
                         </td>
                         <td data-label="Lasted" className="px-6 py-4 text-center text-slate-500">
-                          {r.daysLasted != null ? `${r.daysLasted} days` : '-'}
+                          {r.daysLasted != null ? (
+                            r.daysLastedIsLive ? (
+                              <span className="text-emerald-600 font-semibold">{r.daysLasted} days (so far)</span>
+                            ) : (
+                              `${r.daysLasted} days`
+                            )
+                          ) : '-'}
                         </td>
                         <td data-label="New Booked" className="px-6 py-4 text-center text-slate-500">
                           {fmtDate(r.replacementBooked)}
